@@ -75,7 +75,7 @@ const G3_DE_ROWS=[
 ['adjektiv',1,'Wortarten','Satz: Ein mutiger Igel überquert den Weg.','Welches Wort ist ein Adjektiv?','mutiger',['Igel','Weg','überquert'],'Welches Wort beschreibt den Igel?'],
 ['alphabet',1,'Wörterbuch','Wörter stehen im Wörterbuch alphabetisch.','Welches Wort steht zuerst?','Birne',['Blume','Brot','Bus'],'Vergleiche den zweiten Buchstaben.'],
 ['freund',1,'Rechtschreibung','Achte auf die richtige Schreibweise.','Welches Wort ist richtig geschrieben?','Freundschaft',['Froindschaft','Fräundschaft','Freuntschaft'],'Denke an das Wort Freund.'],
-['ging',2,'Zeitformen','Vergangene Erlebnisse kann man in der Vergangenheit erzählen.','Wie heißt die Vergangenheit (Präteritum) von gehen?','ging',['geht','gehen','gehe'],'Denke an Gestern ging ich nach Hause.'],
+['ging',2,'Zeitformen','Vergangene Erlebnisse kann man in der Vergangenheit erzählen.','Wie heißt die Vergangenheit (Präteritum) von gehen?','ging',['geht','gehen','gehe'],'Erinnere dich an eine Erzählung über gestern.'],
 ['gespielt',2,'Zeitformen','Vergangenes lässt sich mit hat oder ist ausdrücken.','Welcher Satz steht im Perfekt?','Mia hat gespielt.',['Mia spielt.','Mia spielte.','Mia wird spielen.'],'Suche nach hat und einem Partizip.'],
 ['hoeher',2,'Adjektive','Eigenschaften können wir vergleichen.','Wie steigert man hoch?','höher',['hocher','hochst','höhest'],'Vergleiche zwei unterschiedlich hohe Türme.'],
 ['rennen',2,'Rechtschreibung','Kurze betonte Vokale stehen häufig vor doppelten Mitlauten.','Wie schreibt man das Wort richtig?','rennen',['renen','reenen','rennn'],'Sprich das kurze e.'],
@@ -147,6 +147,8 @@ makeEnglishTasks=function(level){
 // Fehlerkarten aus dem neuen Lernniveau wiederholen echte oder ähnliche Aufgaben.
 const g3OldReview=makeReviewTask;
 makeReviewTask=function(entry){
+ // Keine zu schweren Fehlerkarten erzwingen, falls ein Lernniveau gesunken ist.
+ if(progress.skills[entry.subject]?.level<entry.level)return null;
  const old=g3OldReview(entry);if(old)return old;
  let task=null;
  if(entry.subject==='math'&&entry.key.startsWith('g3:math:')){
