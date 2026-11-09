@@ -39,6 +39,7 @@ function reviewEntryFor(task,subject) {
 function recordLearningMistake(task,subject) {
   const details=reviewEntryFor(task,subject);
   let entry=progress.reviewBank.find(x=>x.subject===subject && x.key===details.key);
+  if(typeof treasureMarkMistake==='function')treasureMarkMistake(task,subject);
   if(entry) {entry.errors=Math.min(10000,entry.errors+1);entry.wins=0;entry.level=details.level;}
   else {
     progress.reviewBank.push({...details,errors:1,wins:0});
@@ -72,7 +73,8 @@ function flagReviewTask(country,level) {
   return {label:'Flaggen-Wiederholung',context:'Erkennst du die passende Länderflagge?',
     question:`Welche Flagge gehört zu ${country.name}?`,answer:country.name,
     options:multipleChoice(country.name,others.map(x=>x.name)),
-    optionFlags:Object.fromEntries([country,...others].map(x=>[x.name,flagAsset(x)])),
+    optionFlags:Object.fromEntries([country,...others].filter(x=>flagAsset(x)).map(x=>[x.name,flagAsset(x)])),
+    optionEmoji:Object.fromEntries([country,...others].filter(x=>!flagAsset(x)).map(x=>[x.name,flagEmoji(x)])),
     hint:'Vergleiche die Streifen, Farben und ihre Reihenfolge.',
     explanation:`Das ist die Flagge von ${country.name}.`};
 }
@@ -126,6 +128,7 @@ function makeReviewTask(entry) {
       `${q.question} :: ${q.answer}`===entry.key || q.question===entry.key);
     if(source) task={...copyTask(source),label:'Wiederholungs-Detektiv',
       question:`Schau noch einmal genau hin: ${source.question}`,reviewKey:entry.key};
+    else if(entry.key.includes('Wo entdeckt ')) task={...newGermanReadingTask(),label:'Neue Lesespur zur Wiederholung',reviewKey:entry.key};
   } else if(entry.subject==='english') {
     const word=ENGLISH_WORDS.find(x=>x.en===entry.key);
     if(word) task=englishReviewTask(word);
@@ -191,7 +194,7 @@ function scheduleLaterReview(currentSession,task,atIndex) {
         taskReviewKey(old,subject)===key) continue;
     const other=currentSession.tasks.filter((_,idx)=>idx!==i);
     const candidate=chooseUniqueReview(entry,other);
-    if(candidate) {currentSession.tasks[i]=candidate;currentSession.seenIdentities?.add(taskIdentity(candidate));return true;}
+    if(candidate) {candidate.timerSeconds=old.timerSeconds;currentSession.tasks[i]=candidate;currentSession.seenIdentities?.add(taskIdentity(candidate));return true;}
   }
   // Falls es keinen freien Platz gibt, bleibt das Thema für die nächste Runde vorgemerkt.
   return false;
@@ -228,7 +231,7 @@ function mixedTaskAllowed(currentSession,candidate,slot) {
 function makeFreshMixedReplacement(currentSession,slot) {
   const old=currentSession.tasks[slot], subject=old.subject;
   const level=progress.skills[subject].level;
-  const normalize=task=>({...task,subject,studyLevel:level,reviewTask:false});
+  const normalize=task=>({...task,subject,studyLevel:level,reviewTask:false,timerSeconds:old.timerSeconds});
   // Zunächst Aufgaben des schon bekannten Lernniveaus bevorzugen.
   for(let attempt=0;attempt<90;attempt++) {
     let options;
@@ -267,7 +270,7 @@ function makeFreshMixedReplacement(currentSession,slot) {
       if(mixedTaskAllowed(currentSession,task,slot))return task;
     }
     for(const country of shuffle(FLAG_COUNTRIES)) {
-      for(const color of shuffle(FLAG_COLORS[country.id])) {
+      for(const color of shuffle(FLAG_COLORS[country.id] || [])) {
         const task=normalize(flagColorTask(country,color));
         if(mixedTaskAllowed(currentSession,task,slot))return task;
       }
@@ -307,7 +310,7 @@ function rewindMixedSession(currentSession) {
   currentSession.pendingBacktrack=null;
 }
 function beginMixedSession() {
-  session={mode:'mixed',subject:'mixed',tasks:buildMixedSessionTasks(),index:0,
+  session={mode:'mixed',subject:'mixed',tasks:markTimedTasks(buildMixedSessionTasks()),index:0,
     misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null,
     solved:Array(MIXED_LENGTH).fill(false),credited:Array(MIXED_LENGTH).fill(false),
     hadMistake:Array(MIXED_LENGTH).fill(false),hadHint:Array(MIXED_LENGTH).fill(false),
@@ -316,8 +319,9 @@ function beginMixedSession() {
   session.correctTargets=new Set();
   saveProgress();showView('play');renderTask();
 }
-function mixedWrongAnswer(button,task,feedback) {
-  button.classList.add('incorrect');
+function mixedWrongAnswer(button,task,feedback,timedOut=false) {
+  stopQuestionTimer();registerWrongAnswer();
+  if(button)button.classList.add('incorrect');
   session.answeredThisTask=true;
   session.misses++;
   session.hadMistake[session.index]=true;
@@ -329,11 +333,12 @@ function mixedWrongAnswer(button,task,feedback) {
   for(const option of element('answer-options').children) option.disabled=true;
   element('hint-text').classList.remove('hidden');
   feedback.classList.add('try');
-  feedback.textContent=`💪 Wir lernen daraus! ${task.explanation} Wir gehen zwei Schritte zurück: Bereits richtige Fragen werden durch NEUE Aufgaben ersetzt. Diese Frage üben wir später noch einmal.`;
+  feedback.textContent=`${timedOut?'⏰ Zeit abgelaufen!':'💪 Wir lernen daraus!'} ${task.explanation} Wir gehen zwei Schritte zurück: Bereits richtige Fragen werden durch NEUE Aufgaben ersetzt. Diese Frage üben wir später noch einmal.`;
   element('next-button').textContent=session.index>=2?'↩ Zwei Aufgaben zurück':'↩ Noch einmal üben';
   element('next-button').classList.remove('hidden');
 }
 function mixedCorrectAnswer(button,task,feedback) {
+  stopQuestionTimer();registerCorrectAnswer();
   button.classList.add('correct');
   session.answeredThisTask=true;
   const index=session.index;
@@ -349,6 +354,7 @@ function mixedCorrectAnswer(button,task,feedback) {
       progress.stars+=earned;
       progress.answered++;
       progress.todayAnswered++;
+      if(typeof rewardLearningWin==='function')rewardLearningWin(task,task.subject,true);
     }
     // Auch neue Rücksprung-Aufgaben fließen in die Lernstandsschätzung ein.
     const change=updateSkill(task.subject,session.hadMistake[index]?1:session.misses,
@@ -367,7 +373,8 @@ function mixedCorrectAnswer(button,task,feedback) {
   feedback.textContent=`🎉 Geschafft! ${task.explanation}${firstSuccess?' ⭐ Weiter so!':' Gut wiederholt!'}`;
   for(const option of element('answer-options').children) option.disabled=true;
   element('next-button').textContent=index===MIXED_LENGTH-1?'Lernreise abschließen 🎉':'Weiter zur nächsten Aufgabe →';
-  element('next-button').classList.remove('hidden');
+  element('next-button').classList.add('hidden');
+  scheduleAutoAdvance();
   element('mission-fill').style.width=`${mixedSolvedCount(session)/MIXED_LENGTH*100}%`;
 }
 function advanceMixedSession() {

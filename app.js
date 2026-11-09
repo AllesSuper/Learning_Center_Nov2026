@@ -14,22 +14,26 @@ function todayLocal() {
   return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
 }
 function emptyProgress() {
-  return { stars: 0, answered: 0, sessions: 0, day: todayLocal(), todayAnswered: 0, lastSubject: 'german', memoryWins: 0, reviewBank: [], skills: Object.fromEntries(SUBJECTS.map(subject=>[subject,newSkill()])) };
+  return { stars: 0, answered: 0, sessions: 0, day: todayLocal(), todayAnswered: 0, lastSubject: 'german', memoryWins: 0, reviewBank: [], timeBank: 0, timeStreak: 0, timersEnabled: true, skills: Object.fromEntries(SUBJECTS.map(subject=>[subject,newSkill()])), passport:{seen:[],completed:[]},pet:{type:null,xp:0},bossTickets:0,bossWins:0,treasureCards:[] };
 }
 function loadProgress() {
   const defaults = emptyProgress();
   try {
     const p = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     const safe = {...defaults};
-    for (const key of ['stars','answered','sessions','todayAnswered']) {
+    for (const key of ['stars','answered','sessions','todayAnswered','timeBank','timeStreak']) {
       if (Number.isSafeInteger(p[key]) && p[key] >= 0) safe[key] = p[key];
     }
     if (p.day === defaults.day) safe.day = p.day;
     else safe.todayAnswered = 0;
     if (SUBJECTS.includes(p.lastSubject)) safe.lastSubject = p.lastSubject;
+    safe.timeStreak=Math.min(2,safe.timeStreak);
+    safe.timeBank=Math.min(100000,safe.timeBank);
+    if (p.timersEnabled===false) safe.timersEnabled=false;
     if(Number.isSafeInteger(p.memoryWins) && p.memoryWins >= 0) safe.memoryWins = p.memoryWins;
     safe.reviewBank=safeReviewBank(p.reviewBank);
     for(const subject of SUBJECTS) safe.skills[subject]=safeSkill(p.skills?.[subject],subject);
+    if(typeof safeAdventureState==='function')safeAdventureState(safe,p);
     return safe;
   } catch (_) { return defaults; }
 }
@@ -113,10 +117,14 @@ function renderProgress() {
   if(reviewStat) reviewStat.textContent=progress.reviewBank.length;
   renderSkillProgress();
   renderReviewList();
+  updateTimeControls();
+  if(typeof renderAdventureProgress==='function')renderAdventureProgress();
 }
 function showView(name) {
+  if(typeof activeMiniQuest!=='undefined' && activeMiniQuest && activeMiniQuest.mode!==name && typeof cancelMiniQuest==='function')cancelMiniQuest();
+  if(name!=='play'){stopQuestionTimer();cancelAutoAdvance();}
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
-  ['home','play','end','progress','memory'].forEach(view=>element(`view-${view}`).classList.toggle('hidden',view!==name));
+  ['home','play','end','progress','memory','expedition','boss','treasure'].forEach(view=>element(`view-${view}`).classList.toggle('hidden',view!==name));
   document.querySelectorAll('.nav-button').forEach(btn=>{
     const active = btn.dataset.view === name || (name === 'play' && session && btn.dataset.view === session.subject);
     btn.classList.toggle('active',active);
@@ -125,11 +133,12 @@ function showView(name) {
   window.scrollTo({top:0,behavior:'instant'});
 }
 function startSession(subject) {
-  session = {subject,tasks:makeSubjectTasks(subject,progress.skills[subject].level),index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null};
+  session = {subject,tasks:markTimedTasks(makeSubjectTasks(subject,progress.skills[subject].level),subject),index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null};
   progress.lastSubject=subject;saveProgress();
   showView('play');renderTask();
 }
 function renderTask() {
+  cancelAutoAdvance();stopQuestionTimer();
   const task=session.tasks[session.index];
   const realSubject=task.subject || session.subject;
   const isMixed=session.mode==='mixed';
@@ -161,7 +170,7 @@ function renderTask() {
     const picture=document.createElement('img');picture.src=task.visualFlag;
     picture.alt='Errate das Land dieser Flagge';picture.className='big-flag';visual.append(picture);
   } else if(task.visualEmoji) {
-    const symbol=document.createElement('span');symbol.className='big-emoji';symbol.textContent=task.visualEmoji;visual.append(symbol);
+    const symbol=document.createElement('span');symbol.className=task.subject==='flags'?'big-emoji big-flag-emoji':'big-emoji';symbol.textContent=task.visualEmoji;visual.append(symbol);
   }
   visual.classList.toggle('hidden',!task.visualFlag&&!task.visualEmoji);
   element('hint-text').textContent=`💡 ${task.hint}`;
@@ -179,10 +188,14 @@ function renderTask() {
       picture.alt=`Flagge von ${choice}`;picture.className='option-flag';
       const caption=document.createElement('span');caption.textContent=choice;caption.className='sr-only';
       btn.append(picture,caption);btn.setAttribute('aria-label',`Flagge von ${choice}`);
+    } else if(task.optionEmoji?.[choice]){
+      const symbol=document.createElement('span');symbol.className='option-flag-emoji';symbol.textContent=task.optionEmoji[choice];
+      btn.append(symbol);btn.setAttribute('aria-label',`Flagge von ${choice}`);
     } else btn.textContent=choice;
     btn.addEventListener('click',()=>selectAnswer(btn,choice));
     optionContainer.appendChild(btn);
   }
+  startQuestionTimer(task);
 }
 function selectAnswer(button,choice) {
   if(!session || session.answeredThisTask) return;
@@ -195,11 +208,13 @@ function selectAnswer(button,choice) {
     return;
   }
   if(choice===task.answer) {
+    stopQuestionTimer();registerCorrectAnswer();
     button.classList.add('correct');
     session.answeredThisTask=true;
     const earned=session.misses===0&&!session.hintUsed?2:1;
     session.earned+=earned;
     progress.stars+=earned;progress.answered++;progress.todayAnswered++;
+    if(typeof rewardLearningWin==='function')rewardLearningWin(task,session.subject,true);
     const change=updateSkill(session.subject,session.misses,session.hintUsed);
     recordLearningSuccess(task,session.subject,session.misses===0&&!session.hintUsed);
     if(change) {
@@ -214,9 +229,11 @@ function selectAnswer(button,choice) {
     feedback.textContent=`🎉 Richtig! ${task.explanation} +${earned} ${earned===1?'Stern':'Sterne'}`;
     for(const option of element('answer-options').children) option.disabled=true;
     element('next-button').textContent=session.index===TASKS_PER_MISSION-1?'Mission abschließen 🎉':'Weiter zur nächsten Aufgabe →';
-    element('next-button').classList.remove('hidden');
+    element('next-button').classList.add('hidden');
+    scheduleAutoAdvance();
     element('mission-fill').style.width=`${(session.index+1)/TASKS_PER_MISSION*100}%`;
   } else {
+    stopQuestionTimer();registerWrongAnswer();
     button.classList.add('incorrect');button.disabled=true;
     session.misses++;
     if(session.misses===1) { recordLearningMistake(task,session.subject);saveProgress(); }
@@ -226,8 +243,12 @@ function selectAnswer(button,choice) {
   }
 }
 function completeSession() {
+  if(!session || session.completed)return;
+  session.completed=true; // Genau eine Abschlusswertung und Boss-Einladung pro Runde.
   if(session?.mode==='mixed') {
-    progress.sessions++;saveProgress();
+    progress.sessions++;
+    if(typeof completeMixedAdventure==='function')completeMixedAdventure();
+    saveProgress();
     element('end-copy').textContent=`🎲 Du hast alle 20 Aufgaben aus Mathe, Deutsch, Englisch und Flaggen geschafft! ${session.rewinds} Rücksprünge haben dir beim Üben geholfen. ${progress.reviewBank.length} Themen sind noch für spätere Wiederholungen vorgemerkt.`;
     element('end-stars').textContent=`⭐ +${session.earned} Sterne`;
     showView('end');return;
@@ -270,6 +291,8 @@ element('hint-button').addEventListener('click',()=>{
   element('hint-text').classList.remove('hidden');
 });
 element('read-button').addEventListener('click',speakQuestion);
+element('time-button').addEventListener('click',spendTimeBonus);
+element('timer-toggle').addEventListener('change',event=>{progress.timersEnabled=event.target.checked;saveProgress();});
 element('next-button').addEventListener('click',()=>{
   if(!session || !session.answeredThisTask) return;
   if(session.mode==='mixed') { advanceMixedSession();return; }
@@ -281,6 +304,7 @@ element('home-button').addEventListener('click',()=>showView('home'));
 element('reset-progress').addEventListener('click',resetProgress);
 element('memory-back').addEventListener('click',()=>showView('home'));
 element('memory-next').addEventListener('click',startMemoryGame);
+if(typeof attachAdventureListeners==='function')attachAdventureListeners();
 renderProgress();showView('home');
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1')) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));

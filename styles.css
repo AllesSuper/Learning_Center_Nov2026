@@ -78,3 +78,53 @@
 .progress-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:900px){.progress-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:540px){.progress-grid{grid-template-columns:1fr}}
+
+/* v5 – adaptive Time-Bank, optionale Zeitfragen, acht Mathe-Antworten,
+   und 200+ Flaggen. Bestehende Gestaltung bleibt unverändert. */
+.time-bank-panel{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:#f4f1ff;border:1px solid #e2dafa;border-radius:13px;padding:11px 15px;
+  color:#52448c;font-weight:800;font-size:14px;margin:11px 0 15px}
+.time-question-panel{margin:12px 0 18px;padding:16px;background:#eef8ff;border:2px solid #b7d9f3;border-radius:18px}
+.time-question-top{display:flex;justify-content:space-between;align-items:center;gap:15px;font-weight:800;color:#275781;font-size:16px}
+.time-question-top strong{font-size:24px;font-variant-numeric:tabular-nums}
+.time-track{margin:11px 0;height:12px;overflow:hidden;border-radius:20px;background:#cbdfea}
+.time-fill{height:100%;width:100%;background:#32b28f;border-radius:20px;transition:width .2s linear}
+.time-warning{background:#fff6eb;border-color:#f2bc7a}
+.time-warning .time-fill{background:#e99845}
+.time-button{background:#fff;border:2px solid #6b61c2;color:#5042a6;font-size:15px;
+  font-weight:900;border-radius:12px;padding:10px 16px;width:100%;min-height:48px}
+.time-button:disabled{opacity:.5;cursor:not-allowed}
+.time-reward{background:#dcf9e9;color:#246c4e;padding:10px 15px;border-radius:13px;
+  font-size:16px;font-weight:900;margin-bottom:12px;text-align:center}
+.timer-settings{background:#f3f6ff;border:1px solid #e1e7f6;padding:15px 19px;
+  border-radius:17px;margin:18px 0;color:#424676}
+.timer-settings label{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:800}
+.timer-settings input{width:24px;height:24px;accent-color:#6959b7;flex:none}
+.timer-settings p{margin:6px 0 0;font-size:13px;color:#616985}
+.big-flag-emoji{font-size:clamp(85px,14vw,142px);font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif}
+.option-flag-emoji{font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:clamp(43px,8vw,76px);line-height:1.2}
+.answer-option:has(.option-flag-emoji){display:flex;justify-content:center;align-items:center}
+.memory-emoji{font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:clamp(30px,5vw,54px)}
+@media(max-width:680px){.answer-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .answer-option{padding:11px 7px;font-size:17px;min-height:62px}
+  .time-bank-panel{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.time-fill{transition:none}}
+
+/* v6 – vier neue, optionale Lernabenteuer. Alte Styles bleiben erhalten. */
+.adventure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}
+.adventure-teaser,.passport-panel,.pet-progress-panel{background:#fff;border:2px solid #e5e3f4;border-radius:23px;padding:22px;min-width:0}
+.adventure-teaser h2,.passport-panel h2,.pet-progress-panel h2{font-size:22px;margin:3px 0 12px}
+.adventure-teaser p,.passport-panel p,.pet-progress-panel p{color:#626c86;font-size:14px;line-height:1.6;margin:8px 0}
+.adventure-teaser .primary-button,.adventure-teaser .soft-button{margin-top:12px}
+.passport-teaser{background:#f0f7ff;border-color:#cce3f9}.pet-teaser{background:#fff7e9;border-color:#f5dfb8}
+.boss-teaser{background:#f2eeff;border-color:#e1d9fb}.treasure-teaser{background:#eaf9f2;border-color:#ccedda}
+.adventure-symbol{display:block;font-size:48px;line-height:1.3}
+.pet-choices{display:flex;flex-wrap:wrap;gap:8px}.pet-choices button{font-size:15px}
+.reward-badge,.reward-chip{display:inline-block;background:#fff;border:1px solid #d8d5f1;color:#55518a;padding:8px 10px;border-radius:30px;font-weight:800;font-size:13px;margin:5px 7px 6px 0}
+.passport-panel,.pet-progress-panel{margin:20px 0}.region-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:17px}
+.region-card{border-radius:16px;padding:15px;background:#f5f7ff;border:1px solid #e4e9f9;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.region-card strong{font-size:18px}.region-card p{margin:0}.region-card button{margin-top:auto;max-width:100%;white-space:normal;line-height:1.4}
+.pet-progress-line{display:flex;align-items:center;gap:15px;margin:12px 0}.pet-progress-line span{font-size:60px}
+.reward-items{display:flex;flex-wrap:wrap}.adventure-quest{margin-top:15px}.adventure-quest .feedback{margin-top:15px;min-height:28px}
+.adventure-quest .question-visual.hidden{display:none}
+@media(max-width:700px){.adventure-grid,.region-grid{grid-template-columns:1fr}.adventure-teaser,.passport-panel,.pet-progress-panel{padding:16px}.adventure-symbol{font-size:40px}}

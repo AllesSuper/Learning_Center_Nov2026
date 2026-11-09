@@ -90,3 +90,26 @@ const GERMAN_BONUS = [
   {label:'Lesedetektive',context:'Jona möchte seinen Freund Amir überraschen. Er faltet ein Papierboot und schreibt einen Gruß darauf. Dann legt er es vor Amirs Haustür. Als Amir das Boot findet, muss er lächeln.',question:'Was zeigt, dass sich Amir freut?',answer:'Er lächelt.',options:['Er lächelt.','Er läuft weg.','Er versteckt das Boot.','Er macht die Tür zu.'],hint:'Achte auf die letzte Handlung in der Geschichte.',explanation:'Amirs Lächeln zeigt, dass er sich freut.'},
   {label:'Lesedetektive',context:'Im Tierheim wartet ein kleiner Hund auf ein neues Zuhause. Eines Tages besucht ihn eine Familie. Sie geht mit ihm spazieren und spielt mit ihm. Am nächsten Tag holt die Familie ihn ab.',question:'Was passiert am nächsten Tag?',answer:'Die Familie holt den Hund ab.',options:['Die Familie holt den Hund ab.','Der Hund zieht in den Wald.','Das Tierheim schließt.','Der Hund fährt alleine weg.'],hint:'Lies den letzten Satz noch einmal.',explanation:'Am nächsten Tag holt die Familie den Hund aus dem Tierheim.'}
 ];
+
+
+// v5: 200+ eindeutige Länder-/Gebietsflaggen, in vier Lernstufen.
+// Das iPad zeigt die Unicode-Flaggen als native, lokal verfügbare Emoji-Grafiken.
+// Ursprüngliche 16 SVG-Flaggen bleiben unverändert und werden weiter verwendet.
+// Einträge nach ISO-3166-1-alpha-2; schwierige Länder erst auf späteren Stufen.
+const EXTRA_FLAG_DATA = `
+us:Vereinigte Staaten|gb:Vereinigtes Königreich|es:Spanien|pt:Portugal|gr:Griechenland|tr:Türkei|no:Norwegen|cz:Tschechien|sk:Slowakei|hr:Kroatien|si:Slowenien|hu:Ungarn|ro:Rumänien|bg:Bulgarien|is:Island|ca:Kanada|mx:Mexiko|br:Brasilien|ar:Argentinien|au:Australien|nz:Neuseeland|cn:China|in:Indien|kr:Südkorea|za:Südafrika|eg:Ägypten|ma:Marokko|th:Thailand
+id:Indonesien|my:Malaysia|sg:Singapur|vn:Vietnam|ph:Philippinen|pk:Pakistan|bd:Bangladesch|lk:Sri Lanka|np:Nepal|il:Israel|sa:Saudi-Arabien|ae:Vereinigte Arabische Emirate|qa:Katar|ir:Iran|iq:Irak|jo:Jordanien|lb:Libanon|cy:Zypern|mt:Malta|mc:Monaco|sm:San Marino|va:Vatikanstadt|li:Liechtenstein|ad:Andorra|rs:Serbien|ba:Bosnien und Herzegowina|me:Montenegro|mk:Nordmazedonien|al:Albanien|md:Moldau|by:Belarus|lt:Litauen|lv:Lettland|ge:Georgien|am:Armenien|az:Aserbaidschan|kz:Kasachstan|uz:Usbekistan|mn:Mongolei|tw:Taiwan|hk:Hongkong|cl:Chile|pe:Peru|co:Kolumbien|ve:Venezuela|uy:Uruguay|py:Paraguay|bo:Bolivien|ec:Ecuador|cr:Costa Rica|pa:Panama|cu:Kuba|do:Dominikanische Republik|jm:Jamaika|ht:Haiti|bs:Bahamas|tn:Tunesien|dz:Algerien|ng:Nigeria|ke:Kenia|et:Äthiopien|gh:Ghana|sn:Senegal|cm:Kamerun|ci:Elfenbeinküste|tz:Tansania|ug:Uganda|zw:Simbabwe|zm:Sambia|ao:Angola|na:Namibia|bw:Botswana
+bj:Benin|bf:Burkina Faso|bi:Burundi|cv:Kap Verde|cf:Zentralafrikanische Republik|td:Tschad|km:Komoren|cg:Republik Kongo|cd:Demokratische Republik Kongo|dj:Dschibuti|gq:Äquatorialguinea|er:Eritrea|sz:Eswatini|ga:Gabun|gm:Gambia|gn:Guinea|gw:Guinea-Bissau|ls:Lesotho|lr:Liberia|ly:Libyen|mg:Madagaskar|mw:Malawi|ml:Mali|mr:Mauretanien|mu:Mauritius|mz:Mosambik|ne:Niger|rw:Ruanda|st:São Tomé und Príncipe|sc:Seychellen|sl:Sierra Leone|so:Somalia|ss:Südsudan|sd:Sudan|tg:Togo|eh:Westsahara|af:Afghanistan|bh:Bahrain|bt:Bhutan|bn:Brunei|kh:Kambodscha|kp:Nordkorea|kw:Kuwait|kg:Kirgisistan|la:Laos|mv:Malediven|mm:Myanmar|om:Oman|ps:Palästinensische Gebiete|sy:Syrien|tj:Tadschikistan|tl:Timor-Leste|tm:Turkmenistan|ye:Jemen|fj:Fidschi|ki:Kiribati|mh:Marshallinseln|fm:Mikronesien|nr:Nauru|pw:Palau|pg:Papua-Neuguinea|ws:Samoa|sb:Salomonen|to:Tonga|tv:Tuvalu|vu:Vanuatu|ag:Antigua und Barbuda|bb:Barbados|bz:Belize|dm:Dominica|gd:Grenada|gt:Guatemala|hn:Honduras|ni:Nicaragua|kn:St. Kitts und Nevis|lc:St. Lucia|vc:St. Vincent und die Grenadinen|sv:El Salvador|tt:Trinidad und Tobago|gy:Guyana|sr:Suriname
+aw:Aruba|ai:Anguilla|bm:Bermuda|vg:Britische Jungferninseln|ky:Kaimaninseln|cw:Curaçao|fo:Färöer|gl:Grönland|gi:Gibraltar|gp:Guadeloupe|gu:Guam|im:Isle of Man|je:Jersey|gg:Guernsey|mo:Macau|mq:Martinique|ms:Montserrat|nc:Neukaledonien|pf:Französisch-Polynesien|pr:Puerto Rico|re:Réunion|tc:Turks- und Caicosinseln|vi:Amerikanische Jungferninseln|as:Amerikanisch-Samoa|ck:Cookinseln|nu:Niue|pm:Saint-Pierre und Miquelon|yt:Mayotte|wf:Wallis und Futuna`;
+const EXTRA_FLAG_PAIRS = EXTRA_FLAG_DATA.replace(/\n/g,'|').split('|').map(part=>part.trim()).filter(Boolean);
+for(const [index,item] of EXTRA_FLAG_PAIRS.entries()) {
+  const colon=item.indexOf(':');
+  const id=item.slice(0,colon), name=item.slice(colon+1);
+  // Zusätzliche Regionen und Inselgebiete erst auf fortgeschrittenem Niveau.
+  const from=index<28?1:index<103?2:index<170?3:4;
+  FLAG_COUNTRIES.push({id,name,from});
+}
+function flagEmoji(country) {
+  const code=country.id.toUpperCase();
+  return [...code].map(ch=>String.fromCodePoint(0x1f1e6+ch.charCodeAt(0)-65)).join('');
+}

@@ -17,7 +17,8 @@ function safeSkill(raw,subject) {
   if(Array.isArray(raw.recent)) result.recent=raw.recent.slice(-8).filter(x=>x===0||x===1);
   return result;
 }
-function flagAsset(country) { return `./flags/${country.id}.svg`; }
+const ORIGINAL_FLAG_IDS = new Set(['at','be','ch','de','dk','ee','fi','fr','ie','it','jp','lu','nl','pl','se','ua']);
+function flagAsset(country) { return ORIGINAL_FLAG_IDS.has(country.id)?`./flags/${country.id}.svg`:null; }
 function copyTask(task) {return {...task,options:shuffle(task.options)};}
 
 function makeMathLevelTasksLegacy(level) {
@@ -125,9 +126,38 @@ function createMathSkillTask(kind,level,fixedRow=null) {
   const expression=`${left} ${operation} ${right}`;
   // Nur die Ergebniszahl ist in der Antwort enthalten, nicht der Lösungsweg.
   return {label,context,question:`Was ergibt ${expression}?`,answer:String(answer),
-    options:numericChoices(answer,kind.startsWith('hundred')?100:kind==='mul'?Math.max(2,a):kind==='div'?1:5),
+    options:numericEightChoices(answer,kind,kind==='mul'||kind==='div'?a:null),
     hint,explanation:`${expression} = ${answer}.`,reviewKey,
     mathKind:kind,operandA:left,operandB:right,mathRow:kind==='mul'||kind==='div'?a:null};
+}
+// v5: Acht plausible Antwortoptionen. Mehrere falsche Antworten haben dieselbe
+// Einerstelle wie das richtige Ergebnis (z.B. 23 − 22 -> 1, 11, 21 ...).
+// Dadurch verrät der letzte Zahlenteil die richtige Antwort NICHT mehr.
+function numericEightChoices(answer, kind, row=null) {
+  const isHundred=kind==='hundredPlus'||kind==='hundredMinus';
+  const upper=isHundred?1000:kind==='mul'||kind==='div'?110:100;
+  const options=[answer];
+  const add=value=>{if(Number.isInteger(value)&&value>=0&&value<=upper&&!options.includes(value))options.push(value);};
+  if(isHundred) {
+    for(const n of shuffle(Array.from({length:11},(_,i)=>i*100)))add(n);
+  } else {
+    // Zuerst mindestens drei Lösungen mit derselben Einerstelle anlegen.
+    for(const value of shuffle(Array.from({length:Math.floor(upper/10)+1},(_,i)=>i*10+answer%10)))add(value);
+    // Die restlichen Aufgaben sind typische nahe Rechenfehler.
+    const close=shuffle([1,-1,2,-2,3,-3,4,-4,5,-5,9,-9,10,-10,
+      11,-11,20,-20,row||7,-(row||7),(row||7)*2,-(row||7)*2]);
+    const fixed=options.slice(0,Math.min(4,options.length));
+    options.length=0;options.push(...fixed);
+    for(const delta of close) {
+      add(answer+delta);
+      if(options.length>=8)break;
+    }
+    if(options.length<8) {
+      for(let n=0;n<=upper&&options.length<8;n++) add(n);
+    }
+  }
+  if(options.length<8)throw new Error('Nicht genügend Mathe-Antworten');
+  return shuffle(options.slice(0,8).map(String));
 }
 function makeMathLevelTasks(level) {
   // Jede 5er-Mission deckt beide Einmaleins-Arten, Plus, Minus und Hunderter ab.
@@ -178,15 +208,18 @@ function makeFlagTasks(level) {
   const pool=FLAG_COUNTRIES.filter(x=>x.from<=level);
   const fresh=shuffle(pool.filter(x=>x.from===level));
   const review=shuffle(pool.filter(x=>x.from<level));
-  const chosen=shuffle(level===1?fresh:[...fresh.slice(0,3),...review.slice(0,5),...fresh.slice(3)]).slice(0,5);
+  const chosen=shuffle(level===1?fresh:[...fresh.slice(0,4),...review.slice(0,5),...fresh.slice(4)]).slice(0,5);
   return chosen.map((country,i)=>{
-    const others=shuffle(pool.filter(x=>x.name!==country.name)).slice(0,3);
+    const others=shuffle(pool.filter(x=>x.id!==country.id)).slice(0,3);
     const choices=multipleChoice(country.name,others.map(x=>x.name));
     const reverse=level>=4 && i%2===0;
-    return {label:reverse?'Flaggen-Finder':'Flaggen-Detektiv',context:'Erkennst du die Länder an ihren Flaggen?',
-      visualFlag:reverse?null:flagAsset(country),optionFlags:reverse?Object.fromEntries([country,...others].map(x=>[x.name,flagAsset(x)])):null,
-      question:reverse?`Welche Flagge gehört zu ${country.name}?`:'Zu welchem Land gehört diese Flagge?',answer:country.name,
-      options:choices,hint:'Achte auf Farben, Streifen und die Richtung der Streifen.',explanation:`Das ist die Flagge von ${country.name}.`};
+    return {label:reverse?'Flaggen-Finder':'Flaggen-Detektiv',context:'Erkennst du die Länder und Gebiete an ihren Flaggen?',
+      visualFlag:reverse?null:flagAsset(country),
+      visualEmoji:reverse?null:(flagAsset(country)?null:flagEmoji(country)),
+      optionFlags:reverse?Object.fromEntries([country,...others].filter(x=>flagAsset(x)).map(x=>[x.name,flagAsset(x)])):null,
+      optionEmoji:reverse?Object.fromEntries([country,...others].filter(x=>!flagAsset(x)).map(x=>[x.name,flagEmoji(x)])):null,
+      question:reverse?`Welche Flagge gehört zu ${country.name}?`:'Zu welchem Land oder Gebiet gehört diese Flagge?',answer:country.name,
+      options:choices,hint:'Achte auf Farben, Streifen, Sterne und Symbole.',explanation:`Das ist die Flagge von ${country.name}.`};
   });
 }
 function makeSubjectTasks(subject,level) {
@@ -219,8 +252,12 @@ function updateSkill(subject,misses,hintUsed) {
 function refreshFutureTasks() {
   if(!session) return;
   const remaining=TASKS_PER_MISSION-session.index-1;
-  if(remaining>0) session.tasks.splice(session.index+1,remaining,
-    ...makeSubjectTasks(session.subject,progress.skills[session.subject].level).slice(0,remaining));
+  if(remaining>0) {
+    const oldTasks=session.tasks.slice(session.index+1);
+    const fresh=makeSubjectTasks(session.subject,progress.skills[session.subject].level).slice(0,remaining);
+    session.tasks.splice(session.index+1,remaining,...fresh.map((task,i)=>
+      ({...task,timerSeconds:oldTasks[i]?.timerSeconds})));
+  }
 }
 function renderSkillProgress() {
   for(const subject of SUBJECTS) {
@@ -265,8 +302,11 @@ function memoryFace(index,visible) {
   tile.replaceChildren();tile.classList.toggle('revealed',visible);
   if(!visible){tile.textContent='❔';tile.setAttribute('aria-label',`Verdeckte Karte ${index+1}`);return;}
   if(card.type==='flag') {
-    const image=document.createElement('img');image.src=flagAsset(card.country);
-    image.alt=`Flagge von ${card.country.name}`;image.className='memory-flag';tile.append(image);
+    const path=flagAsset(card.country);
+    if(path){const image=document.createElement('img');image.src=path;
+      image.alt=`Flagge von ${card.country.name}`;image.className='memory-flag';tile.append(image);}
+    else {const symbol=document.createElement('span');symbol.className='memory-emoji';
+      symbol.textContent=flagEmoji(card.country);tile.append(symbol);}
   } else {const text=document.createElement('strong');text.textContent=card.country.name;tile.append(text);}
   tile.setAttribute('aria-label',card.type==='flag'?`Flagge von ${card.country.name}`:card.country.name);
 }
