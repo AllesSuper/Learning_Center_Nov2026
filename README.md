@@ -17,3 +17,10 @@ Keine Anmeldung, keine Werbung, kein NVIDIA-API-Key und kein externes KI-Modell 
 ## Testhinweis
 
 Automatisierte Prüfungen und Chromium-Tests wurden im Projekt durchgeführt. Ein Praxistest auf einem echten iPad bleibt erforderlich.
+
+
+## Online spielen
+
+**https://allessuper.github.io/Learning_Center_Nov2026/**
+
+Version 7: Lernmix mit 20 Fragen als Standardstart; 226 echte lokale SVG-Flaggen; offline-faehig. Lernstaende bleiben im Browser des Geraets. Keine API-Schluessel im Projekt.

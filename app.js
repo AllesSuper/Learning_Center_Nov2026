@@ -168,7 +168,14 @@ function renderTask() {
   const visual=element('question-visual');visual.replaceChildren();
   if(task.visualFlag) {
     const picture=document.createElement('img');picture.src=task.visualFlag;
-    picture.alt='Errate das Land dieser Flagge';picture.className='big-flag';visual.append(picture);
+    picture.alt='Errate das Land dieser Flagge';picture.className='big-flag';
+    picture.addEventListener('error',()=>{
+      picture.classList.add('hidden');
+      const warning=document.createElement('span');
+      warning.textContent='⚠️ Flaggenbild fehlt – bitte die Webseite aktualisieren.';
+      warning.className='flag-image-warning';visual.append(warning);
+    });
+    visual.append(picture);
   } else if(task.visualEmoji) {
     const symbol=document.createElement('span');symbol.className=task.subject==='flags'?'big-emoji big-flag-emoji':'big-emoji';symbol.textContent=task.visualEmoji;visual.append(symbol);
   }
@@ -186,6 +193,11 @@ function renderTask() {
     if(task.optionFlags?.[choice]){
       const picture=document.createElement('img');picture.src=task.optionFlags[choice];
       picture.alt=`Flagge von ${choice}`;picture.className='option-flag';
+      picture.addEventListener('error',()=>{
+        picture.classList.add('hidden');
+        const warning=document.createElement('span');warning.className='flag-image-warning';
+        warning.textContent='⚠️ Bild fehlt';btn.append(warning);
+      });
       const caption=document.createElement('span');caption.textContent=choice;caption.className='sr-only';
       btn.append(picture,caption);btn.setAttribute('aria-label',`Flagge von ${choice}`);
     } else if(task.optionEmoji?.[choice]){

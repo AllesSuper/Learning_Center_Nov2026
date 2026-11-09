@@ -18,7 +18,12 @@ function safeSkill(raw,subject) {
   return result;
 }
 const ORIGINAL_FLAG_IDS = new Set(['at','be','ch','de','dk','ee','fi','fr','ie','it','jp','lu','nl','pl','se','ua']);
-function flagAsset(country) { return ORIGINAL_FLAG_IDS.has(country.id)?`./flags/${country.id}.svg`:null; }
+function flagAsset(country) {
+  // Die ursprünglichen 16 Flaggen und alle 210 weiteren werden als echte lokale SVG-Dateien geladen.
+  // Damit erscheinen unter Windows und auf dem iPad keine bloßen ISO-Buchstaben wie CL.
+  if(!country || !/^[a-z]{2}$/.test(country.id)) return null;
+  return `./flags/${country.id}.svg`;
+}
 function copyTask(task) {return {...task,options:shuffle(task.options)};}
 
 function makeMathLevelTasksLegacy(level) {
@@ -304,7 +309,9 @@ function memoryFace(index,visible) {
   if(card.type==='flag') {
     const path=flagAsset(card.country);
     if(path){const image=document.createElement('img');image.src=path;
-      image.alt=`Flagge von ${card.country.name}`;image.className='memory-flag';tile.append(image);}
+      image.alt=`Flagge von ${card.country.name}`;image.className='memory-flag';
+      image.addEventListener('error',()=>{image.classList.add('hidden');tile.textContent='⚠️ Bild fehlt';});
+      tile.append(image);}
     else {const symbol=document.createElement('span');symbol.className='memory-emoji';
       symbol.textContent=flagEmoji(card.country);tile.append(symbol);}
   } else {const text=document.createElement('strong');text.textContent=card.country.name;tile.append(text);}
