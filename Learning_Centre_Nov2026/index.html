@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4539a5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mathe November">
+  <meta name="description" content="Mathe, Deutsch, Englisch und Flaggen spielerisch lernen – ohne Werbung und ohne Anmeldung.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Mathe November – Lernabenteuer Klasse 2</title>
+  <script src="./learning_content.js" defer></script>
+  <script src="./learning_extension.js" defer></script>
+  <script src="./mixed_mode.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#hauptinhalt">Zum Inhalt springen</a>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Lernabenteuer Startseite"><span class="brand-buddy" aria-hidden="true">🦊</span><span>Lern<span class="brand-accent">abenteuer</span></span></div>
+      <div class="top-actions"><span class="age-tag">Für die 2. Klasse</span><span class="stars-chip" aria-live="polite">⭐ <strong id="stars-header">0</strong> Sterne</span></div>
+    </header>
+    <nav class="main-nav" aria-label="Hauptnavigation">
+      <button class="nav-button active" data-view="home" aria-current="page">🏠 Start</button>
+      <button class="nav-button" data-view="mixed">🎲 Lernmix</button>
+      <button class="nav-button" data-view="math">🔢 Mathe</button>
+      <button class="nav-button" data-view="german">📚 Deutsch</button>
+      <button class="nav-button" data-view="english">🐯 Englisch</button>
+      <button class="nav-button" data-view="flags">🌍 Flaggen</button>
+      <button class="nav-button" data-view="memory">🧩 Memory</button>
+      <button class="nav-button" data-view="progress">🏆 Erfolge</button>
+    </nav>
+    <main id="hauptinhalt">
+      <section id="view-home" class="view" aria-labelledby="welcome-title">
+        <div class="hero">
+          <div class="hero-content">
+            <span class="hero-label">DEINE NÄCHSTE MISSION WARTET</span>
+            <h1 id="welcome-title">Bereit für ein <em>neues Abenteuer?</em></h1>
+            <p>Knacke Rechenrätsel, lies Geschichten, entdecke Tiere auf Englisch und reise mit Flaggen um die Welt. Jeder Versuch macht dich stärker!</p>
+            <button class="primary-button" id="quick-start">🚀 Abenteuer starten <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="hero-illustration" aria-hidden="true"><div class="planet">🪐</div><div class="rocket">🚀</div><div class="spark a">✦</div><div class="spark b">✦</div><div class="spark c">✧</div></div>
+        </div>
+        <div class="section-heading"><h2>Wähle deine Welt</h2><p>Worauf hast du heute Lust?</p></div>
+        <div class="subject-grid">
+          <button id="math-card" class="subject-card math-card" data-view="math"><span class="subject-icon" aria-hidden="true">🔢</span><span class="subject-top">DIE ZAHLENWELT</span><strong>Mathe-Mission</strong><span>Rechnen, kombinieren und Rätsel lösen.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-math">Stufe 1 von 7</span><span class="level-track"><span id="level-fill-math"></span></span></button>
+          <button id="german-card" class="subject-card german-card" data-view="german"><span class="subject-icon" aria-hidden="true">📚</span><span class="subject-top">DAS WÖRTERLAND</span><strong>Deutsch-Detektive</strong><span>Geschichten lesen und Wörter entdecken.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-german">Stufe 1 von 5</span><span class="level-track"><span id="level-fill-german"></span></span></button>
+          <button id="english-card" class="subject-card english-card" data-view="english"><span class="subject-icon" aria-hidden="true">🐯</span><span class="subject-top">DIE WÖRTER-SAFARI</span><strong>Englisch-Entdecker</strong><span>Katze heißt cat! Tiere, Farben und erste Wörter.</span><span class="subject-footer">Auf Entdeckung <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-english">Stufe 1 von 4</span><span class="level-track"><span id="level-fill-english"></span></span></button>
+          <button id="flags-card" class="subject-card flags-card" data-view="flags"><span class="subject-icon" aria-hidden="true">🌍</span><span class="subject-top">UM DIE WELT</span><strong>Flaggen-Reise</strong><span>Erkenne Länder und entdecke ihre bunten Flaggen.</span><span class="subject-footer">Weltreise starten <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-flags">Stufe 1 von 4</span><span class="level-track"><span id="level-fill-flags"></span></span></button>
+        </div>
+        <section class="mixed-banner" aria-labelledby="mixed-banner-heading">
+          <div class="mixed-banner-icon" aria-hidden="true">🎲</div>
+          <div class="mixed-banner-content">
+            <span class="eyebrow">NEU: DEINE BUNTE LERNREISE</span>
+            <h2 id="mixed-banner-heading">20 Aufgaben – vier Lernwelten!</h2>
+            <p>Mathe, Deutsch, Englisch und Flaggen bunt gemischt. Bei einem Fehler gehst du zwei Schritte zurück. Schon gelöste Aufgaben werden durch neue ersetzt; nur Fehlerfragen üben wir später erneut.</p>
+            <div class="mixed-caps"><span>🔢 5× Mathe</span><span>📚 5× Deutsch</span><span>🐯 5× Englisch</span><span>🌍 5× Flaggen</span></div>
+          </div>
+          <button id="mixed-start" class="primary-button mixed-start" type="button">Lernmix starten →</button>
+        </section>
+        <div class="memory-banner"><div><strong>🧩 Flaggen-Memory</strong><p>Kannst du die Flaggen den Ländern zuordnen? Finde die Paare!</p></div><button type="button" class="soft-button" data-view="memory">Jetzt spielen</button></div>
+        <section class="day-panel" aria-labelledby="day-goal-title"><div><span class="eyebrow">DEIN TAGESZIEL</span><h2 id="day-goal-title">5 Aufgaben schaffen 🎯</h2><p>Ein paar Minuten Lernen reichen für einen guten Start.</p></div><div class="goal-right"><strong id="goal-label">0 / 5</strong><div class="progress-track" aria-label="Tagesziel-Fortschritt"><div id="goal-fill" class="progress-fill"></div></div></div></section>
+        <p class="privacy-note">🔒 Keine Werbung · Keine Anmeldung · Fortschritt bleibt auf diesem Gerät</p>
+      </section>
+      <section id="view-play" class="view hidden" aria-labelledby="mission-title">
+        <div class="mission-top"><button class="back-button" id="back-button">← Zur Übersicht</button><div class="mission-progress"><span id="mission-count">Aufgabe 1 von 5</span><div class="progress-track"><div id="mission-fill" class="progress-fill"></div></div></div></div>
+        <p id="mixed-note" class="mixed-note hidden" role="status"></p>
+        <div class="question-card">
+          <div class="question-label" id="mission-kind">MATHE-MISSION</div>
+          <h1 id="mission-title">Aufgabe</h1>
+          <p id="mission-context" class="reading-text hidden"></p>
+          <p id="mission-question" class="question-text"></p>
+          <div id="question-visual" class="question-visual hidden" aria-live="off"></div>
+          <div class="mission-meta"><span id="current-level" class="level-tag">Stufe 1</span><span id="level-up-notice" class="level-up-notice hidden" role="status"></span></div>
+          <div class="question-tools"><button class="soft-button" id="read-button" type="button">🔊 Vorlesen</button><button class="soft-button" id="hint-button" type="button">💡 Tipp anzeigen</button></div>
+          <p id="hint-text" class="hint-text hidden"></p>
+          <div id="answer-options" class="answer-options" role="group" aria-label="Antwortmöglichkeiten"></div>
+          <div id="celebration" class="celebration hidden" aria-hidden="true">⭐ ✨ ⭐</div>
+          <div id="answer-feedback" class="feedback hidden" role="status" aria-live="polite"></div>
+          <button id="next-button" class="primary-button next-button hidden" type="button">Weiter zur nächsten Aufgabe →</button>
+        </div>
+      </section>
+      <section id="view-memory" class="view hidden" aria-labelledby="memory-heading">
+        <div class="mission-top"><button class="back-button" id="memory-back">← Zur Übersicht</button><div class="mission-progress"><span>Flaggen zuordnen</span><div class="progress-track"><div id="memory-fill" class="progress-fill"></div></div></div></div>
+        <section class="memory-panel"><span class="eyebrow">🧩 KLEINE WELTREISE</span><h1 id="memory-heading">Flaggen-Memory</h1><p id="memory-info">Finde die passenden Paare!</p><div id="memory-board" class="memory-board" role="group" aria-label="Memory-Karten"></div><p id="memory-result" class="memory-result" role="status"></p><button class="primary-button hidden" id="memory-next" type="button">Noch eine Runde spielen 🧩</button></section>
+      </section>
+      <section id="view-end" class="view hidden" aria-labelledby="end-heading"><div class="end-card"><span class="end-emoji" aria-hidden="true">🎉</span><span class="eyebrow">MISSION GESCHAFFT</span><h1 id="end-heading">Gut gemacht!</h1><p id="end-copy">Du hast viel geschafft.</p><div id="end-stars" class="end-stars">⭐ +0 Sterne</div><div class="end-actions"><button class="primary-button" id="repeat-button">Noch eine Mission 🚀</button><button class="soft-button" id="home-button">Zur Startseite</button></div></div></section>
+      <section id="view-progress" class="view hidden" aria-labelledby="progress-title"><div class="section-heading"><h1 id="progress-title">Deine Erfolge 🏆</h1><p>Hier siehst du, was du schon erreicht hast.</p></div><div class="progress-grid"><div class="stat-card"><span aria-hidden="true">⭐</span><strong id="stat-stars">0</strong><span>Gesammelte Sterne</span></div><div class="stat-card"><span aria-hidden="true">✅</span><strong id="stat-answered">0</strong><span>Gelöste Aufgaben</span></div><div class="stat-card"><span aria-hidden="true">🎯</span><strong id="stat-sessions">0</strong><span>Abgeschlossene Missionen</span></div><div class="stat-card"><span aria-hidden="true">🔁</span><strong id="stat-reviews">0</strong><span>Themen zum Wiederholen</span></div></div><section class="skills-panel"><h2>Deine Lernstufen</h2><p>Die Schwierigkeit wächst bei vier selbstständig richtigen Antworten. Mit Tipps oder nach Fehlern bleibt Zeit zum Üben.</p><div class="skill-grid"><div>🔢 <strong>Mathe</strong><span id="skill-math">Stufe 1</span></div><div>📚 <strong>Deutsch</strong><span id="skill-german">Stufe 1</span></div><div>🐯 <strong>Englisch</strong><span id="skill-english">Stufe 1</span></div><div>🌍 <strong>Flaggen</strong><span id="skill-flags">Stufe 1</span></div><div>🧩 <strong>Memory</strong><span><span id="stat-memory">0</span> Spiele geschafft</span></div></div></section><div class="parent-panel"><h2>Für Eltern</h2><p>Alle Fortschritte werden nur im Browser dieses Geräts gespeichert. Es gibt keine Nutzerkonten, Werbung oder Übertragung an einen KI-Dienst.</p><h3 class="review-title">🔁 Diese Themen üben wir noch</h3><p>Falsch gelöste Aufgaben werden lokal vorgemerkt, in späteren Lernmix-Runden bevorzugt und erst nach zwei sicheren Wiederholungen abgehakt.</p><div id="review-list" class="review-list" aria-live="polite"></div><button class="danger-button" id="reset-progress">Fortschritt zurücksetzen</button></div></section>
+    </main>
+    <footer>Mit Freude lernen · Lernabenteuer Version 4.0 · Für die 2. Klasse · Eltern begleiten die Nutzung</footer>
+  </div>
+</body>
+</html>
