@@ -280,7 +280,7 @@ document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('clic
   else if(btn.dataset.view==='mixed') beginMixedSession();
   else showView(btn.dataset.view);
 }));
-element('quick-start').addEventListener('click',()=>startSession(SUBJECTS[(SUBJECTS.indexOf(progress.lastSubject)+1)%SUBJECTS.length]));
+element('quick-start').addEventListener('click',beginMixedSession); // Standard: 20er-Lernmix.
 element('mixed-start').addEventListener('click',beginMixedSession);
 element('back-button').addEventListener('click',()=>showView('home'));
 element('hint-button').addEventListener('click',()=>{
@@ -305,7 +305,8 @@ element('reset-progress').addEventListener('click',resetProgress);
 element('memory-back').addEventListener('click',()=>showView('home'));
 element('memory-next').addEventListener('click',startMemoryGame);
 if(typeof attachAdventureListeners==='function')attachAdventureListeners();
-renderProgress();showView('home');
+// Die App startet standardmäßig direkt mit dem Lernmix; die anderen Lernwelten bleiben über die Navigation erreichbar.
+renderProgress();beginMixedSession();
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1')) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
