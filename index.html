@@ -13,10 +13,11 @@
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="icon" href="./icons/icon-192.png">
   <link rel="stylesheet" href="./styles.css">
-  <title>Lernabenteuer – Lernen mit Spaß, Klasse 2</title>
+  <title>Lernabenteuer – Lernen mit Spaß, Klasse 3</title>
   <script src="./learning_content.js" defer></script>
   <script src="./learning_extension.js" defer></script>
   <script src="./mixed_mode.js" defer></script>
+  <script src="./grade3_extension.js" defer></script>
   <script src="./gameplay_extension.js" defer></script>
   <script src="./adventure_extension.js" defer></script>
   <script src="./app.js" defer></script>
@@ -26,7 +27,7 @@
   <div class="page-shell">
     <header class="topbar">
       <div class="brand" aria-label="Lernabenteuer Startseite"><span class="brand-buddy" aria-hidden="true">🦊</span><span>Lern<span class="brand-accent">abenteuer</span></span></div>
-      <div class="top-actions"><span class="age-tag">Für die 2. Klasse</span><span class="stars-chip" aria-live="polite">⭐ <strong id="stars-header">0</strong> Sterne</span></div>
+      <div class="top-actions"><span class="age-tag">Für die 3. Klasse</span><span class="stars-chip" aria-live="polite">⭐ <strong id="stars-header">0</strong> Sterne</span></div>
     </header>
     <nav class="main-nav" aria-label="Hauptnavigation">
       <button class="nav-button active" data-view="home" aria-current="page">🏠 Start</button>
@@ -44,16 +45,16 @@
           <div class="hero-content">
             <span class="hero-label">DEIN LERNMIX STARTET JETZT</span>
             <h1 id="welcome-title">Bereit für ein <em>neues Abenteuer?</em></h1>
-            <p>Knacke Rechenrätsel, lies Geschichten, entdecke Tiere auf Englisch und reise mit Flaggen um die Welt. Jeder Versuch macht dich stärker!</p>
+            <p>Knacke knifflige Rechenrätsel, verstehe spannende Geschichten und entdecke Englisch und reise mit Flaggen um die Welt. Jeder Versuch macht dich stärker!</p>
             <button class="primary-button" id="quick-start">🎲 Lernmix starten <span aria-hidden="true">→</span></button>
           </div>
           <div class="hero-illustration" aria-hidden="true"><div class="planet">🪐</div><div class="rocket">🚀</div><div class="spark a">✦</div><div class="spark b">✦</div><div class="spark c">✧</div></div>
         </div>
         <div class="section-heading"><h2>Wähle deine Welt</h2><p>Worauf hast du heute Lust?</p></div>
         <div class="subject-grid">
-          <button id="math-card" class="subject-card math-card" data-view="math"><span class="subject-icon" aria-hidden="true">🔢</span><span class="subject-top">DIE ZAHLENWELT</span><strong>Mathe-Mission</strong><span>Rechnen, kombinieren und Rätsel lösen.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-math">Stufe 1 von 7</span><span class="level-track"><span id="level-fill-math"></span></span></button>
-          <button id="german-card" class="subject-card german-card" data-view="german"><span class="subject-icon" aria-hidden="true">📚</span><span class="subject-top">DAS WÖRTERLAND</span><strong>Deutsch-Detektive</strong><span>Geschichten lesen und Wörter entdecken.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-german">Stufe 1 von 5</span><span class="level-track"><span id="level-fill-german"></span></span></button>
-          <button id="english-card" class="subject-card english-card" data-view="english"><span class="subject-icon" aria-hidden="true">🐯</span><span class="subject-top">DIE WÖRTER-SAFARI</span><strong>Englisch-Entdecker</strong><span>Katze heißt cat! Tiere, Farben und erste Wörter.</span><span class="subject-footer">Auf Entdeckung <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-english">Stufe 1 von 4</span><span class="level-track"><span id="level-fill-english"></span></span></button>
+          <button id="math-card" class="subject-card math-card" data-view="math"><span class="subject-icon" aria-hidden="true">🔢</span><span class="subject-top">DIE ZAHLENWELT</span><strong>Mathe-Mission</strong><span>Bis 1.000 rechnen, Einmaleins und Knobelaufgaben.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-math">Stufe 1 von 7</span><span class="level-track"><span id="level-fill-math"></span></span></button>
+          <button id="german-card" class="subject-card german-card" data-view="german"><span class="subject-icon" aria-hidden="true">📚</span><span class="subject-top">DAS WÖRTERLAND</span><strong>Deutsch-Detektive</strong><span>Längere Geschichten, Wortarten und Rechtschreibung.</span><span class="subject-footer">Los geht's <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-german">Stufe 1 von 5</span><span class="level-track"><span id="level-fill-german"></span></span></button>
+          <button id="english-card" class="subject-card english-card" data-view="english"><span class="subject-icon" aria-hidden="true">🐯</span><span class="subject-top">DIE WÖRTER-SAFARI</span><strong>Englisch-Entdecker</strong><span>Tiere, Schulsachen und erste englische Dialoge.</span><span class="subject-footer">Auf Entdeckung <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-english">Stufe 1 von 4</span><span class="level-track"><span id="level-fill-english"></span></span></button>
           <button id="flags-card" class="subject-card flags-card" data-view="flags"><span class="subject-icon" aria-hidden="true">🌍</span><span class="subject-top">UM DIE WELT</span><strong>Flaggen-Reise</strong><span>Entdecke über 200 Flaggen – von ganz leicht bis knifflig.</span><span class="subject-footer">Weltreise starten <span aria-hidden="true">↗</span></span><span class="level-pill" id="level-flags">Stufe 1 von 4</span><span class="level-track"><span id="level-fill-flags"></span></span></button>
         </div>
         <section class="mixed-banner" aria-labelledby="mixed-banner-heading">
@@ -151,7 +152,7 @@
         <section class="pet-progress-panel"><h2>🐾 Dein Lernfreund</h2><div class="pet-progress-line"><span id="pet-emoji-progress">🥚</span><strong id="pet-status-progress">Noch kein Lernfreund</strong></div><div id="pet-gifts" class="reward-items"></div><p>Haustier-Erfahrung kommt durch Lernen. Kein echtes Geld, keine Käufe, keine Werbung.</p></section>
         <section class="skills-panel"><h2>Deine Lernstufen</h2><p>Die Schwierigkeit wächst bei vier selbstständig richtigen Antworten. Mit Tipps oder nach Fehlern bleibt Zeit zum Üben.</p><div class="skill-grid"><div>🔢 <strong>Mathe</strong><span id="skill-math">Stufe 1</span></div><div>📚 <strong>Deutsch</strong><span id="skill-german">Stufe 1</span></div><div>🐯 <strong>Englisch</strong><span id="skill-english">Stufe 1</span></div><div>🌍 <strong>Flaggen</strong><span id="skill-flags">Stufe 1</span></div><div>🧩 <strong>Memory</strong><span><span id="stat-memory">0</span> Spiele geschafft</span></div></div></section><div class="parent-panel"><h2>Für Eltern</h2><p>Alle Fortschritte werden nur im Browser dieses Geräts gespeichert. Es gibt keine Nutzerkonten, Werbung oder Übertragung an einen KI-Dienst.</p><h3 class="review-title">🔁 Diese Themen üben wir noch</h3><p>Falsch gelöste Aufgaben werden lokal vorgemerkt, in späteren Lernmix-Runden bevorzugt und erst nach zwei sicheren Wiederholungen abgehakt.</p><div id="review-list" class="review-list" aria-live="polite"></div><button class="danger-button" id="reset-progress">Fortschritt zurücksetzen</button></div></section>
     </main>
-    <footer>Mit Freude lernen · Lernabenteuer Version 7.0 · Für die 2. Klasse · Eltern begleiten die Nutzung</footer>
+    <footer>Mit Freude lernen · Lernabenteuer Version 8.0 · Für die 3. Klasse · Eltern begleiten die Nutzung</footer>
   </div>
 </body>
 </html>
