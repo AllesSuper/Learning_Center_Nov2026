@@ -158,14 +158,20 @@ function varietyGermanOne(kind,level){
     const pool=VARIETY_READINGS.filter(r=>r[7]<=Math.max(3,Math.min(4,level+1)));
     return varietyReading(varietyChoose(pool,'readings',r=>r[0]));
   }
-  if(kind==='spell')return varietySpelling(varietyChoose(VARIETY_SPELLS,'spellings',r=>r.id));
+  if(kind==='spell'){
+    const lengthLimit=level<=1?9:level===2?12:level===3?14:30;
+    const pool=VARIETY_SPELLS.filter(r=>r.correct.length<=lengthLimit);
+    return varietySpelling(varietyChoose(pool,'spellings',r=>r.id));
+  }
   return varietyKnowledge(varietyChoose(VARIETY_KNOWLEDGE,'knowledge',r=>VARIETY_KNOWLEDGE.indexOf(r)));
 }
 // 20er-Lernmix behält die bisherigen 5 Deutsch- und 5 Englisch-Fragen bei.
 makeGermanLevelTasks=function(level){return shuffle(['read','read','spell','spell','know'].map(k=>varietyGermanOne(k,level)));};
 makeEnglishTasks=function(level){
-  return shuffle([varietyPhrase(varietyChoose(VARIETY_ENGLISH,'phrases',r=>VARIETY_ENGLISH.indexOf(r))),
-    varietyPhrase(varietyChoose(VARIETY_ENGLISH,'phrases',r=>VARIETY_ENGLISH.indexOf(r))),
+  const phraseLimit=level<=1?12:level===2?22:VARIETY_ENGLISH.length;
+  const simplePhrases=VARIETY_ENGLISH.slice(0,phraseLimit);
+  return shuffle([varietyPhrase(varietyChoose(simplePhrases,'phrases',r=>VARIETY_ENGLISH.indexOf(r))),
+    varietyPhrase(varietyChoose(simplePhrases,'phrases',r=>VARIETY_ENGLISH.indexOf(r))),
     varietyWord(),varietyWord(),varietyWord()]);
 };
 function varietyEight(answer,max){
@@ -232,6 +238,7 @@ makeMathLevelTasks=function(level){return shuffle([
 const varietyPreviousReview=makeReviewTask;
 makeReviewTask=function(entry){
  if(!entry.key.startsWith('v9:'))return varietyPreviousReview(entry);
+ if(progress.skills[entry.subject]?.level<entry.level)return null;
  const p=entry.key.split(':');let t=null;
  if(entry.subject==='german'){
    if(p[1]==='read'){const r=VARIETY_READINGS.find(r=>r[0]===p[2]);if(r)t=varietyReading(r);}
