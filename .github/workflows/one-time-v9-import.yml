@@ -1,0 +1,10 @@
+name: One-time Lernabenteuer v9 import
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Ready for controlled import'
