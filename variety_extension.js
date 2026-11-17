@@ -151,7 +151,7 @@ function varietyWord(){
   return varietyTask('🐾 Englische Wörter','Tiere, Farben, Schulsachen und Alltagswörter.',
     'Was bedeutet „'+word.en+'“?',word.de,wrong.map(x=>x.de),'v9:word:'+word.en,
     'Höre das Wort an und überlege, wo es im Alltag vorkommt.',
-    {speakText:word.en,speechLang:'en-GB',postAnswerSpeak:word.en,visualEmoji:word.emoji});
+    {speakText:word.en,speechLang:'en-GB',postAnswerSpeak:word.en});
 }
 function varietyGermanOne(kind,level){
   if(kind==='read'){

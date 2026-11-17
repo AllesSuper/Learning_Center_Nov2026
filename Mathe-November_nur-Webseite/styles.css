@@ -93,3 +93,6 @@
 @media(max-width:850px){.times-home-banner{flex-wrap:wrap}.times-home-banner>div{flex:1 1 calc(100% - 90px)}.times-home-banner .primary-button{margin-left:70px}}
 @media(max-width:600px){.times-home-banner{padding:19px 16px;gap:11px}.times-home-icon{font-size:42px}.times-home-banner h2{font-size:22px}.times-home-banner>div{flex:1 1 calc(100% - 60px)}.times-home-banner .primary-button{margin:5px 0 0;width:100%}.times-panel{padding:22px 14px}.times-top{flex-wrap:wrap}.times-tag{font-size:10px}.times-row-buttons,.times-mode-buttons{gap:7px}.times-pick{padding:10px 10px;flex:1 0 65px}.times-hud{gap:9px}.times-hud-stats{gap:4px}.times-hud-stats>span{font-size:11px;padding:6px 7px}.times-hud>.soft-button{font-size:12px;padding:9px}.times-choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.times-option{min-height:70px;font-size:24px}.times-result-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.times-equation{font-size:37px!important}}
 @media(prefers-reduced-motion:reduce){.times-rocket,.times-meter>div,.times-option{transition:none!important}}
+
+/* v9: Sichtbare Versionskennung, damit iPads veraltete Startseiten erkennen. */
+.version-note{margin:0 0 15px;padding:8px 12px;border:1px solid #d8d9ea;background:#fff;color:#514986;border-radius:12px;font-size:12px;font-weight:800;text-align:center;line-height:1.45}

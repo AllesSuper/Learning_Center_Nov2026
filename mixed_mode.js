@@ -61,9 +61,9 @@ function englishReviewTask(word) {
   return {label:'Wiederholungs-Safari',context:'Kennst du dieses Wort noch? Höre es dir an.',
     question:`Was bedeutet „${word.en}“ auf Deutsch?`,answer:word.de,
     options:multipleChoice(word.de,alternatives.map(x=>x.de)),
-    hint:'Lass dir das Wort vorlesen. Denke an das passende Bild dazu.',
+    hint:'Lass dir das Wort vorlesen und überlege, was es bedeutet.',
     explanation:`„${word.en}“ bedeutet „${word.de}“.`,speakText:word.en,
-    speechLang:'en-GB',postAnswerSpeak:word.en,visualEmoji:word.emoji};
+    speechLang:'en-GB',postAnswerSpeak:word.en};
 }
 function flagReviewTask(country,level) {
   const pool=FLAG_COUNTRIES.filter(x=>x.from<=Math.max(country.from,level));

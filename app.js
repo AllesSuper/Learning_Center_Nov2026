@@ -176,10 +176,11 @@ function renderTask() {
       warning.className='flag-image-warning';visual.append(warning);
     });
     visual.append(picture);
-  } else if(task.visualEmoji) {
+  } else if(realSubject!=='english' && task.visualEmoji) {
+    // Alte Englisch-Aufgaben mit gespeicherten Emojis ebenfalls ohne Bild anzeigen.
     const symbol=document.createElement('span');symbol.className=task.subject==='flags'?'big-emoji big-flag-emoji':'big-emoji';symbol.textContent=task.visualEmoji;visual.append(symbol);
   }
-  visual.classList.toggle('hidden',!task.visualFlag&&!task.visualEmoji);
+  visual.classList.toggle('hidden',!task.visualFlag && (realSubject==='english'||!task.visualEmoji));
   element('hint-text').textContent=`💡 ${task.hint}`;
   element('hint-text').classList.add('hidden');
   element('answer-feedback').className='feedback hidden';

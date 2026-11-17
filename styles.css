@@ -128,3 +128,10 @@
 .reward-items{display:flex;flex-wrap:wrap}.adventure-quest{margin-top:15px}.adventure-quest .feedback{margin-top:15px;min-height:28px}
 .adventure-quest .question-visual.hidden{display:none}
 @media(max-width:700px){.adventure-grid,.region-grid{grid-template-columns:1fr}.adventure-teaser,.passport-panel,.pet-progress-panel{padding:16px}.adventure-symbol{font-size:40px}}
+
+/* Neuer Weg zur Mathe-November-Webseite. Klasse-3-Programm bleibt erhalten. */
+.november-update-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff9e8;border:2px solid #edcc78;border-radius:16px;padding:12px 18px;margin:0 0 16px;color:#493862;font-size:13px;line-height:1.4}
+.november-update-banner strong{font-size:15px}
+.november-update-banner span{flex:1;min-width:170px}
+.november-update-banner a{display:inline-block;padding:10px 13px;background:#4e40ae;color:#fff;text-decoration:none;border-radius:12px;font-weight:800}
+.november-update-banner a:focus-visible{outline:3px solid #d09225;outline-offset:2px}

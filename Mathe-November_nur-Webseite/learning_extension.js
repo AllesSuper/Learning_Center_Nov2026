@@ -154,14 +154,16 @@ function makeEnglishTasks(level) {
   const chosen=shuffle([...selected,...shuffle(pool)]).filter((x,i,arr)=>arr.findIndex(y=>x.en===y.en)===i).slice(0,5);
   return chosen.map((word,i)=>{
     const fromSame=shuffle(ENGLISH_WORDS.filter(x=>x.group===word.group && x.en!==word.en));
-    const picture=i%2===0 && word.group!=='phrases';
+    // Nur Text: Bilder und Emojis würden die Übersetzung bereits verraten.
+    // Beide Richtungen bleiben erhalten: Deutsch -> Englisch und Englisch -> Deutsch.
+    const germanToEnglish=i%2===0;
     const alternatives=fromSame.slice(0,3);
-    if(picture) {
-      return {label:'Wörter-Safari',context:'Schau auf das Bild und suche das englische Wort.',visualEmoji:word.emoji,
-        question:word.group==='animals'?'Wie heißt dieses Tier auf Englisch?':word.group==='colors'?'Wie heißt diese Farbe auf Englisch?':'Wie heißt das auf Englisch?',
+    if(germanToEnglish) {
+      return {label:'Wörter-Safari',context:'Übersetze das deutsche Wort ins Englische.',
+        question:`Wie heißt „${word.de}“ auf Englisch?`,
         answer:word.en,options:multipleChoice(word.en,alternatives.map(x=>x.en)),
-        hint:'Sieh dir das Bild in Ruhe an und denke an Wörter, die du schon gehört hast.',
-        explanation:`${word.emoji} ${word.de} heißt auf Englisch „${word.en}“.`,postAnswerSpeak:word.en};
+        hint:'Überlege, wie du das Wort im Englischunterricht gelernt hast.',
+        explanation:`„${word.de}“ heißt auf Englisch „${word.en}“.`,postAnswerSpeak:word.en};
     }
     return {label:'Englisch-Detektive',context:'Höre dir das englische Wort mit dem Lautsprecher an.',
       question:`Was bedeutet „${word.en}“ auf Deutsch?`,answer:word.de,

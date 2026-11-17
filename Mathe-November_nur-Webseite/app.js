@@ -161,10 +161,11 @@ function renderTask() {
   if(task.visualFlag) {
     const picture=document.createElement('img');picture.src=task.visualFlag;
     picture.alt='Errate das Land dieser Flagge';picture.className='big-flag';visual.append(picture);
-  } else if(task.visualEmoji) {
+  } else if(realSubject!=='english' && task.visualEmoji) {
+    // Schutz auch für ältere, lokal gespeicherte Englisch-Wiederholungsfragen.
     const symbol=document.createElement('span');symbol.className='big-emoji';symbol.textContent=task.visualEmoji;visual.append(symbol);
   }
-  visual.classList.toggle('hidden',!task.visualFlag&&!task.visualEmoji);
+  visual.classList.toggle('hidden',!task.visualFlag && (realSubject==='english'||!task.visualEmoji));
   element('hint-text').textContent=`💡 ${task.hint}`;
   element('hint-text').classList.add('hidden');
   element('answer-feedback').className='feedback hidden';
