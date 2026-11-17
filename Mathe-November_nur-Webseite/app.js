@@ -71,7 +71,7 @@ function makeMathTasks() {
   const a = int(12,54), b=int(8,100-a);
   const x=int(35,100), y=int(8,x-1);
   const f=int(3,11), g=int(1,10);
-  const divisor=int(3,11), quotient=int(1,10);
+  const divisor=int(3,10), quotient=int(1,10);
   const books=int(1,10), boxes=int(3,11);
   const tasks=[
     {label:'Plus-Rechnen',context:'',question:`Wie viel ist ${a} + ${b}?`,answer:String(a+b),options:numericChoices(a+b,10),hint:'Addiere zuerst die Hunderter, dann Zehner und Einer.',explanation:`${a} + ${b} = ${a+b}. Gut gerechnet!`},

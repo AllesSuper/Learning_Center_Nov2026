@@ -109,8 +109,9 @@ function timesMakeQuestion(task) {
     explanation=`${row} × ${factor} = ${product}`;
     hint=`Zähle ${factor} Mal in ${row}er-Schritten: ${Array.from({length:Math.min(factor,6)},(_,i)=>row*(i+1)).join(' · ')}${factor>6?' · …':''}`;
   } else if(op==='div') {
-    // Beide Richtungen der Umkehraufgabe: auch 110 : 10 = 11.
-    const divisor=(factor===10 || ((factor!==1 && revision%2===0) && Math.random()<0.45))?factor:row;
+    // Beide Richtungen bleiben fuer die Reihen 3 bis 10 erlaubt.
+    // Bei der 11er-Reihe wird ausschliesslich durch 1 bis 10 geteilt.
+    const divisor=(row===11 || factor===10 || ((factor!==1 && revision%2===0) && Math.random()<0.45))?factor:row;
     answer=product/divisor;
     if(story) {
       context=`🛸 ${product} Kristalle werden gleichmäßig auf ${divisor} Raumschiffe verteilt.`;

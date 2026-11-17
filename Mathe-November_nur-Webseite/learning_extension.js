@@ -79,9 +79,10 @@ function createMathSkillTask(kind,level,fixedRow=null) {
       hint='Du kannst in gleich großen Schritten zählen oder an eine bekannte Malaufgabe denken.';
       reviewKey=`mul:${a}`;
     } else {
-      // Beide Teilrichtungen trainieren: 110 ÷ 11 = 10 UND 110 ÷ 10 = 11.
-      // Bei einem Zehnerfaktor wird bewusst durch 10 geteilt.
-      divisor=(b===10||Math.random()<0.5)?b:a;
+      // Beide Teilrichtungen ueben, jedoch niemals durch 11 teilen.
+      // In der 11er-Reihe bleibt der Divisor stets der zweite Faktor (1 bis 10),
+      // z. B. 110 ÷ 10 = 11. Alle anderen Reihen koennen beide Richtungen nutzen.
+      divisor=(a===11||b===10||Math.random()<0.5)?b:a;
       answer=a*b/divisor;label=`${a}er-Reihe · Geteilt`;
       context=`${a*b} Dinge werden in Gruppen mit je ${divisor} Dingen aufgeteilt.`;
       hint='Welche passende Malaufgabe hilft dir beim Teilen?';
