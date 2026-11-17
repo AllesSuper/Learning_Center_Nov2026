@@ -240,8 +240,19 @@ function timesAnswer(selected) {
   timesEl('times-rocket').style.left=`${Math.min(88,5+(g.correct/TIMES_BASE_QUESTIONS)*83)}%`;
   timesEl('times-meter-fill').style.width=`${Math.min(100,g.correct/TIMES_BASE_QUESTIONS*100)}%`;
   timesEl('times-goal-count').textContent=`${g.correct} / ${TIMES_BASE_QUESTIONS}`;
-  timesEl('times-next').textContent=g.correct>=TIMES_BASE_QUESTIONS?'🏁 Flug abschließen':'🚀 Zum nächsten Planeten';
-  timesEl('times-next').classList.remove('hidden');
+  // Kein manueller Weiter-Knopf: richtig = sofort; falsch = Loesung zwei Sekunden.
+  timesEl('times-next').classList.add('hidden');
+  if(good) {
+    timesNextQuestion();
+  } else {
+    setTimeout(()=>{
+      // Bei Abbruch, Neustart oder Wechsel der Ansicht niemals in eine fremde Runde springen.
+      if(timesGame!==g || !g.active || !g.locked || g.current!==q ||
+         timesEl('times-play').classList.contains('hidden') ||
+         timesEl('view-times').classList.contains('hidden'))return;
+      timesNextQuestion();
+    },2000);
+  }
 }
 function timesSaveRound(g,reason) {
   if(g.answered<1)return 0;

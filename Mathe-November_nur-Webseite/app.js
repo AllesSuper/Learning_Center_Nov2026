@@ -131,7 +131,8 @@ function startSession(subject) {
   const tasks=subject==='math'
     ? Array.from({length:Math.ceil(MATH_MISSION_TARGET/TASKS_PER_MISSION)},()=>makeSubjectTasks(subject,level)).flat().slice(0,MATH_MISSION_TARGET)
     : makeSubjectTasks(subject,level);
-  session = {subject,tasks,index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null};
+  session = {subject,tasks,index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null,
+    targetCorrect:tasks.length,correctSolved:0};
   progress.lastSubject=subject;saveProgress();
   showView('play');renderTask();
 }
@@ -142,10 +143,10 @@ function renderTask() {
   session.misses=0;session.answeredThisTask=false;session.hintUsed=false;
   element('mission-count').textContent=isMixed
     ? `Aufgabe ${session.index+1} von ${MIXED_LENGTH} · ${mixedSolvedCount(session)} geschafft`
-    : `Aufgabe ${session.index+1} von ${session.tasks.length}`;
+    : `${session.correctSolved} von ${session.targetCorrect} richtig · Aufgabe ${session.index+1}`;
   element('mission-fill').style.width=isMixed
     ? `${mixedSolvedCount(session)/MIXED_LENGTH*100}%`
-    : `${session.index/session.tasks.length*100}%`;
+    : `${session.correctSolved/session.targetCorrect*100}%`;
   element('mission-kind').textContent=isMixed
     ? `🎲 LERNMIX · ${SUBJECT_ICONS[realSubject]} ${SUBJECT_NAMES[realSubject].toUpperCase()}`
     : `${SUBJECT_ICONS[session.subject]} ${SUBJECT_NAMES[session.subject].toUpperCase()}-MISSION`;
@@ -191,19 +192,54 @@ function renderTask() {
     optionContainer.appendChild(btn);
   }
 }
+// Falsch beantwortete Fragen werden nach exakt zwei Sekunden automatisch verlassen.
+// Den laufenden Lernmodus und die Frage vor dem Sprung erneut kontrollieren.
+function advanceAfterWrong(activeSession,questionIndex) {
+  setTimeout(()=>{
+    if(session!==activeSession || session.index!==questionIndex ||
+       !session.answeredThisTask || element('view-play').classList.contains('hidden'))return;
+    advancePlaySession();
+  },2000);
+}
+function showCorrectOption(task) {
+  [...element('answer-options').children].forEach((option,index)=>{
+    option.disabled=true;
+    if(task.options[index]===task.answer)option.classList.add('correct');
+  });
+}
+function advancePlaySession() {
+  if(!session || !session.answeredThisTask)return;
+  if(session.mode==='mixed') {advanceMixedSession();return;}
+  if(session.correctSolved>=session.targetCorrect) {completeSession();return;}
+  session.index++;
+  if(session.index>=session.tasks.length) {
+    // Sicherheitsnetz fuer eine ungewoehnlich kurze oder abgebrochene Aufgabenliste.
+    session.tasks.push(...makeSubjectTasks(session.subject,progress.skills[session.subject].level));
+  }
+  renderTask();
+}
 function selectAnswer(button,choice) {
   if(!session || session.answeredThisTask) return;
   const task=session.tasks[session.index];
   const feedback=element('answer-feedback');
   feedback.classList.remove('hidden','good','try');
   if(session.mode==='mixed') {
-    if(choice===task.answer) mixedCorrectAnswer(button,task,feedback);
-    else mixedWrongAnswer(button,task,feedback);
+    if(choice===task.answer) {
+      mixedCorrectAnswer(button,task,feedback);
+      advancePlaySession(); // Unmittelbar zur naechsten Frage / zum Ergebnis.
+    } else {
+      mixedWrongAnswer(button,task,feedback); // Lernmix-Ruecksprung und Lernkartei bleiben erhalten.
+      showCorrectOption(task);
+      feedback.textContent=`💡 Richtige Lösung: ${task.answer}. ${task.explanation} · Weiter in 2 Sekunden.`;
+      element('next-button').classList.add('hidden');
+      advanceAfterWrong(session,session.index);
+    }
     return;
   }
   if(choice===task.answer) {
     button.classList.add('correct');
     session.answeredThisTask=true;
+    session.correctSolved++;
     const earned=session.misses===0&&!session.hintUsed?2:1;
     session.earned+=earned;
     progress.stars+=earned;progress.answered++;progress.todayAnswered++;
@@ -220,16 +256,23 @@ function selectAnswer(button,choice) {
     feedback.classList.add('good');
     feedback.textContent=`🎉 Richtig! ${task.explanation} +${earned} ${earned===1?'Stern':'Sterne'}`;
     for(const option of element('answer-options').children) option.disabled=true;
-    element('next-button').textContent=session.index===session.tasks.length-1?'Mission abschließen 🎉':'Weiter zur nächsten Aufgabe →';
-    element('next-button').classList.remove('hidden');
-    element('mission-fill').style.width=`${(session.index+1)/session.tasks.length*100}%`;
+    element('mission-fill').style.width=`${session.correctSolved/session.targetCorrect*100}%`;
+    advancePlaySession(); // Richtige Antwort: ohne Wartezeit / Weiter-Button.
   } else {
-    button.classList.add('incorrect');button.disabled=true;
+    button.classList.add('incorrect');
+    session.answeredThisTask=true; // Nicht erneut klicken, bis die Lösung verschwunden ist.
     session.misses++;
-    if(session.misses===1) { recordLearningMistake(task,session.subject);saveProgress(); }
+    recordLearningMistake(task,session.subject);
+    saveProgress();
+    // Die falsche Antwort zaehlt nicht zu den Zielaufgaben. Neue Aufgabe anhaengen.
+    const replacements=makeSubjectTasks(session.subject,progress.skills[session.subject].level);
+    const replacement=replacements.find(item=>item.question!==task.question) || replacements[0];
+    session.tasks.push(replacement);
+    showCorrectOption(task);
     feedback.classList.add('try');
-    feedback.textContent=session.misses===1?'Fast! Probier es noch einmal. Du schaffst das!':'Guter Versuch! Schau dir den Tipp an und probiere es erneut.';
-    if(session.misses>=2) {element('hint-text').classList.remove('hidden');session.hintUsed=true;}
+    feedback.textContent=`💡 Richtige Lösung: ${task.answer}. ${task.explanation} · Weiter in 2 Sekunden.`;
+    element('next-button').classList.add('hidden');
+    advanceAfterWrong(session,session.index);
   }
 }
 function completeSession() {
@@ -240,7 +283,7 @@ function completeSession() {
     showView('end');return;
   }
   progress.sessions++;saveProgress();
-  element('end-copy').textContent=`Du hast ${session.tasks.length} Aufgaben richtig gelöst! In ${SUBJECT_NAMES[session.subject]} bist du auf Stufe ${progress.skills[session.subject].level}. Auf zur nächsten Entdeckungsreise!`;
+  element('end-copy').textContent=`Du hast ${session.correctSolved} Aufgaben richtig gelöst! In ${SUBJECT_NAMES[session.subject]} bist du auf Stufe ${progress.skills[session.subject].level}. Auf zur nächsten Entdeckungsreise!`;
   element('end-stars').textContent=`⭐ +${session.earned} Sterne`;
   showView('end');
 }
@@ -279,12 +322,8 @@ element('hint-button').addEventListener('click',()=>{
   element('hint-text').classList.remove('hidden');
 });
 element('read-button').addEventListener('click',speakQuestion);
-element('next-button').addEventListener('click',()=>{
-  if(!session || !session.answeredThisTask) return;
-  if(session.mode==='mixed') { advanceMixedSession();return; }
-  session.index++;
-  if(session.index>=session.tasks.length) completeSession();else renderTask();
-});
+// Nur technische Rueckfall-Option: im normalen Lernfluss wird automatisch weitergeschaltet.
+element('next-button').addEventListener('click',advancePlaySession);
 element('repeat-button').addEventListener('click',()=>session?.mode==='mixed'?beginMixedSession():startSession(session.subject));
 element('home-button').addEventListener('click',()=>showView('home'));
 element('reset-progress').addEventListener('click',resetProgress);
