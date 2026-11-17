@@ -3,8 +3,9 @@
 // Lernabenteuer v1 – bewusst ohne externe Bibliotheken oder API-Aufrufe.
 // Kinderbezogene Daten bleiben ausschließlich im lokalen Browser.
 const STORAGE_KEY = 'lernabenteuer-progress-v1';
-const DAILY_TARGET = 5;
+const DAILY_TARGET = 20;
 const TASKS_PER_MISSION = 5;
+const MATH_MISSION_TARGET = 20; // Mathematik ohne Zeitdruck, andere Fächer bleiben bei fünf Aufgaben.
 const SUBJECTS = ['math','german','english','flags'];
 const MAX_LEVEL = {math:7,german:5,english:4,flags:4};
 
@@ -126,7 +127,11 @@ function showView(name) {
   window.scrollTo({top:0,behavior:'instant'});
 }
 function startSession(subject) {
-  session = {subject,tasks:makeSubjectTasks(subject,progress.skills[subject].level),index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null};
+  const level=progress.skills[subject].level;
+  const tasks=subject==='math'
+    ? Array.from({length:Math.ceil(MATH_MISSION_TARGET/TASKS_PER_MISSION)},()=>makeSubjectTasks(subject,level)).flat().slice(0,MATH_MISSION_TARGET)
+    : makeSubjectTasks(subject,level);
+  session = {subject,tasks,index:0,misses:0,earned:0,answeredThisTask:false,hintUsed:false,levelChange:null};
   progress.lastSubject=subject;saveProgress();
   showView('play');renderTask();
 }
@@ -137,10 +142,10 @@ function renderTask() {
   session.misses=0;session.answeredThisTask=false;session.hintUsed=false;
   element('mission-count').textContent=isMixed
     ? `Aufgabe ${session.index+1} von ${MIXED_LENGTH} · ${mixedSolvedCount(session)} geschafft`
-    : `Aufgabe ${session.index+1} von ${TASKS_PER_MISSION}`;
+    : `Aufgabe ${session.index+1} von ${session.tasks.length}`;
   element('mission-fill').style.width=isMixed
     ? `${mixedSolvedCount(session)/MIXED_LENGTH*100}%`
-    : `${session.index/TASKS_PER_MISSION*100}%`;
+    : `${session.index/session.tasks.length*100}%`;
   element('mission-kind').textContent=isMixed
     ? `🎲 LERNMIX · ${SUBJECT_ICONS[realSubject]} ${SUBJECT_NAMES[realSubject].toUpperCase()}`
     : `${SUBJECT_ICONS[session.subject]} ${SUBJECT_NAMES[session.subject].toUpperCase()}-MISSION`;
@@ -215,9 +220,9 @@ function selectAnswer(button,choice) {
     feedback.classList.add('good');
     feedback.textContent=`🎉 Richtig! ${task.explanation} +${earned} ${earned===1?'Stern':'Sterne'}`;
     for(const option of element('answer-options').children) option.disabled=true;
-    element('next-button').textContent=session.index===TASKS_PER_MISSION-1?'Mission abschließen 🎉':'Weiter zur nächsten Aufgabe →';
+    element('next-button').textContent=session.index===session.tasks.length-1?'Mission abschließen 🎉':'Weiter zur nächsten Aufgabe →';
     element('next-button').classList.remove('hidden');
-    element('mission-fill').style.width=`${(session.index+1)/TASKS_PER_MISSION*100}%`;
+    element('mission-fill').style.width=`${(session.index+1)/session.tasks.length*100}%`;
   } else {
     button.classList.add('incorrect');button.disabled=true;
     session.misses++;
@@ -235,7 +240,7 @@ function completeSession() {
     showView('end');return;
   }
   progress.sessions++;saveProgress();
-  element('end-copy').textContent=`Du hast ${TASKS_PER_MISSION} Aufgaben geschafft! In ${SUBJECT_NAMES[session.subject]} bist du auf Stufe ${progress.skills[session.subject].level}. Auf zur nächsten Entdeckungsreise!`;
+  element('end-copy').textContent=`Du hast ${session.tasks.length} Aufgaben richtig gelöst! In ${SUBJECT_NAMES[session.subject]} bist du auf Stufe ${progress.skills[session.subject].level}. Auf zur nächsten Entdeckungsreise!`;
   element('end-stars').textContent=`⭐ +${session.earned} Sterne`;
   showView('end');
 }
@@ -278,7 +283,7 @@ element('next-button').addEventListener('click',()=>{
   if(!session || !session.answeredThisTask) return;
   if(session.mode==='mixed') { advanceMixedSession();return; }
   session.index++;
-  if(session.index>=TASKS_PER_MISSION) completeSession();else renderTask();
+  if(session.index>=session.tasks.length) completeSession();else renderTask();
 });
 element('repeat-button').addEventListener('click',()=>session?.mode==='mixed'?beginMixedSession():startSession(session.subject));
 element('home-button').addEventListener('click',()=>showView('home'));

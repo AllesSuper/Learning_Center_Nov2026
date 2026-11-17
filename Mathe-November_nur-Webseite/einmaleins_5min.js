@@ -1,10 +1,8 @@
 'use strict';
-// Eigenständiger, komplett lokaler 5-Minuten-Lernflug; keine Fremdbibliotheken.
+// Eigenständiger, komplett lokaler Einmaleins-Lernflug: 20 Richtige ohne Zeitdruck.
 // Dieses Modul erweitert die bestehende App, ohne Fach-/Lernmix-Logik zu ersetzen.
 const TIMES_STORAGE = 'mathe-november-sternenflug-v1';
-const TIMES_DURATION_MS = 5 * 60 * 1000;
-const TIMES_BASE_QUESTIONS = 18;
-const TIMES_MAX_QUESTIONS = 24;
+const TIMES_BASE_QUESTIONS = 20; // Ziel sind genau 20 richtig gelöste Aufgaben, ohne Frist.
 const TIMES_ROWS = [3,4,5,6,7,8,9,10,11];
 let timesRow = 'all';
 let timesMode = 'both';
@@ -131,10 +129,6 @@ function timesMakeQuestion(task) {
   if(candidates.length!==8)throw Error('Nicht acht eindeutige Antworten');
   return {...task,question,context,answer,explanation,hint,kind,options:timesShuffle(candidates)};
 }
-function timesClockText(ms) {
-  const seconds=Math.max(0,Math.ceil(ms/1000));
-  return `${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;
-}
 function timesPlayTone(correct) {
   if(!timesSoundOn)return;
   try {
@@ -157,23 +151,14 @@ function timesEndAudio() {
     timesGame.audioCtx=null;
   }
 }
-function timesUpdateClock() {
-  if(!timesGame || !timesGame.active)return;
-  const left=Math.max(0,timesGame.deadline-performance.now());
-  timesEl('times-timer').textContent=timesClockText(left);
-  timesEl('times-timer').classList.toggle('times-urgent',left<=30000);
-  timesEl('times-meter-fill').style.width=`${Math.min(100,(TIMES_DURATION_MS-left)/TIMES_DURATION_MS*100)}%`;
-  if(left<=0)timesFinish('time');
-}
 function timesStart() {
   timesAbandon();
   const stats=timesReadStats();
-  const startedAt=performance.now();
-  timesGame={active:true,startedAt,deadline:startedAt+TIMES_DURATION_MS,
+  timesGame={active:true,
     rowSelection:timesRow,mode:timesMode,deck:timesBuildDeck(timesRow,timesMode,stats),
-    reviewQueue:[],answered:0,correct:0,wrong:0,fast:0,streak:0,maxStreak:0,
-    points:0,hintUsed:false,questionStarted:startedAt,current:null,locked:false,
-    interval:null,audioCtx:null,seenFacts:new Set(),wrongFacts:new Set(),
+    reviewQueue:[],answered:0,correct:0,wrong:0,streak:0,maxStreak:0,
+    points:0,hintUsed:false,current:null,locked:false,
+    audioCtx:null,seenFacts:new Set(),wrongFacts:new Set(),
     recentResults:[],mistakeCounts:new Map(),reviewed:0};
   timesEl('times-setup').classList.add('hidden');
   timesEl('times-results').classList.add('hidden');
@@ -182,24 +167,24 @@ function timesStart() {
   timesEl('times-points').textContent='⭐ 0 Punkte';
   timesEl('times-streak').textContent='🔥 0 in Folge';
   timesEl('times-rocket').style.left='5%';
-  timesEl('times-timer').classList.remove('times-urgent');
-  timesGame.interval=setInterval(timesUpdateClock,250);
+  timesEl('times-goal-count').textContent=`0 / ${TIMES_BASE_QUESTIONS}`;
+  timesEl('times-meter-fill').style.width='0%';
   timesNextQuestion();
 }
 function timesNextQuestion() {
   const g=timesGame;
   if(!g || !g.active)return;
-  timesUpdateClock();
-  if(!g.active)return;
-  if(g.answered>=TIMES_MAX_QUESTIONS || (!g.deck.length&&!g.reviewQueue.length)) {timesFinish('done');return;}
+  if(g.correct>=TIMES_BASE_QUESTIONS) {timesFinish('done');return;}
+  // Nach Fehlern entstehen bei Bedarf weitere Aufgaben: nur 20 Richtige beenden den Flug.
+  if(!g.deck.length && !g.reviewQueue.length)g.deck=timesBuildDeck(g.rowSelection,g.mode,timesReadStats());
   let card;
   const due=g.reviewQueue.findIndex(t=>t.due<=g.answered);
   if(due!==-1)card=g.reviewQueue.splice(due,1)[0];
   else if(g.deck.length)card=g.deck.shift();
   else card=g.reviewQueue.shift();
   g.current=timesMakeQuestion(card);
-  g.questionStarted=performance.now();g.hintUsed=false;g.locked=false;
-  const phase=g.answered<6?'🌍 Aufwärmplanet':g.answered<12?'🪐 Sternennebel':'🌟 Finale: Galaxie der Profis';
+  g.hintUsed=false;g.locked=false;
+  const phase=g.correct<7?'🌍 Aufwärmplanet':g.correct<14?'🪐 Sternennebel':'🌟 Finale: Galaxie der Profis';
   timesEl('times-phase').textContent=(card.revision>0?'🔁 Rückflug: noch einmal üben! · ':'')+phase;
   timesEl('times-question-type').textContent=g.current.kind+` · ${card.row}er-Reihe`;
   timesEl('times-question').textContent=g.current.question;
@@ -210,7 +195,7 @@ function timesNextQuestion() {
   timesEl('times-feedback').textContent='';timesEl('times-feedback').className='times-feedback hidden';
   timesEl('times-next').classList.add('hidden');
   timesEl('times-hint').disabled=false;
-  timesEl('times-counter').textContent=`Aufgabe ${g.answered+1} · ${TIMES_BASE_QUESTIONS} Basisfragen`;
+  timesEl('times-counter').textContent=`🎯 ${g.correct} von ${TIMES_BASE_QUESTIONS} richtig · Aufgabe ${g.answered+1}`;
   const box=timesEl('times-choices');box.replaceChildren();
   g.current.options.forEach((option,index)=>{
     const b=document.createElement('button');b.type='button';b.className='times-option';
@@ -221,32 +206,27 @@ function timesNextQuestion() {
 function timesAnswer(selected) {
   const g=timesGame;
   if(!g||!g.active||g.locked)return;
-  timesUpdateClock();if(!g.active)return;
   g.locked=true;
   const q=g.current,good=selected===q.answer;
   g.answered++;
-  const elapsed=performance.now()-g.questionStarted;
-  const clean=good&&!g.hintUsed;
-  const fast=clean&&elapsed<=6500;
   if(good) {
     g.correct++;g.streak++;g.maxStreak=Math.max(g.maxStreak,g.streak);
-    g.points+=10+(fast?2:0);
-    if(fast)g.fast++;
+    g.points+=10;
     if(q.revision>0)g.reviewed++;
     g.wrongFacts.delete(q.key);
   } else {
     g.wrong++;g.streak=0;g.wrongFacts.add(q.key);
     g.mistakeCounts.set(q.key,(g.mistakeCounts.get(q.key)||0)+1);
-    if(q.revision<2 && g.answered<TIMES_MAX_QUESTIONS) {
+    if(q.revision<2) {
       // Erst später wiederholen, nicht sofort raten lassen.
       g.reviewQueue.push({...q,revision:q.revision+1,due:g.answered+3});
     }
   }
-  g.recentResults.push({key:q.key,correct:good,elapsed,review:q.revision>0});
+  g.recentResults.push({key:q.key,correct:good,review:q.revision>0});
   const feedback=timesEl('times-feedback');
   feedback.className='times-feedback '+(good?'good':'try');
   feedback.textContent=good
-    ? `🎉 ${fast?'Turbo-Treffer! ':'Richtig gerechnet! '}${q.explanation}. ${g.streak>=3?`🔥 ${g.streak} Richtige in Folge!`: 'Weiter so!'}`
+    ? `🎉 Richtig gerechnet! ${q.explanation}. ${g.streak>=3?`🔥 ${g.streak} Richtige in Folge!`: 'Weiter so!'}`
     : `💡 Die Lösung ist ${q.answer}. ${q.explanation}. Diese Aufgabe üben wir später noch einmal.`;
   for(const option of timesEl('times-choices').children) {
     option.disabled=true;
@@ -257,18 +237,19 @@ function timesAnswer(selected) {
   timesEl('times-hint').disabled=true;
   timesEl('times-points').textContent=`⭐ ${g.points} Punkte`;
   timesEl('times-streak').textContent=`🔥 ${g.streak} in Folge`;
-  timesEl('times-rocket').style.left=`${Math.min(88,5+(g.answered/TIMES_BASE_QUESTIONS)*83)}%`;
-  timesEl('times-next').textContent=g.deck.length||g.reviewQueue.length?'🚀 Zum nächsten Planeten':'🏁 Flug abschließen';
+  timesEl('times-rocket').style.left=`${Math.min(88,5+(g.correct/TIMES_BASE_QUESTIONS)*83)}%`;
+  timesEl('times-meter-fill').style.width=`${Math.min(100,g.correct/TIMES_BASE_QUESTIONS*100)}%`;
+  timesEl('times-goal-count').textContent=`${g.correct} / ${TIMES_BASE_QUESTIONS}`;
+  timesEl('times-next').textContent=g.correct>=TIMES_BASE_QUESTIONS?'🏁 Flug abschließen':'🚀 Zum nächsten Planeten';
   timesEl('times-next').classList.remove('hidden');
-  // Countdown bleibt auch nach einer Antwort aktiv: nie länger als fünf Minuten.
 }
-function timesSaveRound(g,reason,seconds) {
+function timesSaveRound(g,reason) {
   if(g.answered<1)return 0;
   const stats=timesReadStats();stats.rounds=Math.min(9999,stats.rounds+1);
   const accuracy=Math.round(g.correct/g.answered*100);
   const key=`${g.rowSelection}:${g.mode}`;
   const previous=stats.bests[key];
-  const candidate={correct:g.correct,accuracy,points:g.points,seconds,answered:g.answered};
+  const candidate={correct:g.correct,accuracy,points:g.points,answered:g.answered};
   if(!previous || candidate.correct>previous.correct ||
     (candidate.correct===previous.correct && candidate.accuracy>previous.accuracy))stats.bests[key]=candidate;
   for(const result of g.recentResults) {
@@ -289,33 +270,29 @@ function timesSaveRound(g,reason,seconds) {
 function timesFinish(reason) {
   const g=timesGame;
   if(!g || !g.active)return;
-  g.active=false;clearInterval(g.interval);timesEndAudio();
-  const elapsed=Math.min(TIMES_DURATION_MS,Math.max(0,performance.now()-g.startedAt));
-  const seconds=Math.round(elapsed/1000);
-  const stars=timesSaveRound(g,reason,seconds);
+  g.active=false;timesEndAudio();
+  const stars=timesSaveRound(g,reason);
   timesEl('times-play').classList.add('hidden');
   timesEl('times-results').classList.remove('hidden');
   const percent=g.answered?Math.round(g.correct/g.answered*100):0;
-  timesEl('times-result-title').textContent=g.answered?'🚀 Sternenflug geschafft!':'🌟 Bereit für den nächsten Start!';
+  timesEl('times-result-title').textContent=reason==='done'?'🚀 20 Richtige! Geschafft!':g.answered?'🌟 Guter Übungsflug!':'🌟 Bereit für den nächsten Start!';
   timesEl('times-result-icon').textContent=percent>=90?'🏆🚀':'🦊🌟';
-  timesEl('times-result-copy').textContent=reason==='time'
-    ? 'Die fünf Minuten sind vorbei. Du bist heute ein Stück sicherer geworden!'
-    : reason==='stop'?'Du hast deinen Flug beendet. Jede Aufgabe bringt dich weiter!'
-    : 'Super! Du hast deinen Übungsflug vor Ablauf der fünf Minuten geschafft!';
+  timesEl('times-result-copy').textContent=reason==='stop'
+    ? `Du hast den Flug bei ${g.correct} richtigen Antworten beendet. Du kannst jederzeit neu starten!`
+    : 'Super! 20 Aufgaben richtig gelöst – ganz ohne Zeitdruck!';
   timesEl('times-result-correct').textContent=String(g.correct);
   timesEl('times-result-accuracy').textContent=`${percent} %`;
-  timesEl('times-result-time').textContent=timesClockText(seconds*1000);
   timesEl('times-result-stars').textContent=String(stars);
   timesEl('times-result-next').textContent=g.wrong
     ? `🔁 ${g.wrong} ${g.wrong===1?'Antwort war':'Antworten waren'} noch unsicher. Die schwierigen Reihen werden beim nächsten Flug bevorzugt geübt. Du hast ${g.reviewed} davon bereits richtig wiederholt!`
-    : g.answered?`🌟 Alle ${g.answered} Aufgaben richtig! Übe morgen wieder fünf Minuten, damit du schnell und sicher bleibst.`
+    : g.answered?`🌟 ${g.correct} Aufgaben richtig! Du kannst morgen ganz in deinem Tempo weiterüben.`
     :'Du kannst jederzeit einen neuen Flug starten.';
   timesGame=null;
   timesUpdateBest();
 }
 function timesAbandon() {
   if(timesGame) {
-    clearInterval(timesGame.interval);timesEndAudio();timesGame.active=false;timesGame=null;
+    timesEndAudio();timesGame.active=false;timesGame=null;
   }
   // Bei Rückkehr aus einer beendeten Runde wieder die Auswahl anzeigen.
   timesEl('times-play').classList.add('hidden');

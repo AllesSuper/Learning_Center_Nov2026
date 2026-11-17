@@ -1,5 +1,5 @@
 'use strict';
-// Additive Lernwelten für Klasse 2 – benutzt die bisherigen Missions- und Fortschrittsfunktionen.
+// Additive Lernwelten für Klasse 3 – benutzt die bisherigen Missions- und Fortschrittsfunktionen.
 const SUBJECT_NAMES = {math:'Mathe',german:'Deutsch',english:'Englisch',flags:'Flaggen'};
 const SUBJECT_ICONS = {math:'🔢',german:'📚',english:'🐯',flags:'🌍'};
 
@@ -216,9 +216,12 @@ function updateSkill(subject,misses,hintUsed) {
 }
 function refreshFutureTasks() {
   if(!session) return;
-  const remaining=TASKS_PER_MISSION-session.index-1;
-  if(remaining>0) session.tasks.splice(session.index+1,remaining,
-    ...makeSubjectTasks(session.subject,progress.skills[session.subject].level).slice(0,remaining));
+  const remaining=session.tasks.length-session.index-1;
+  if(remaining>0) {
+    const level=progress.skills[session.subject].level;
+    const fresh=Array.from({length:Math.ceil(remaining/TASKS_PER_MISSION)},()=>makeSubjectTasks(session.subject,level)).flat();
+    session.tasks.splice(session.index+1,remaining,...fresh.slice(0,remaining));
+  }
 }
 function renderSkillProgress() {
   for(const subject of SUBJECTS) {
