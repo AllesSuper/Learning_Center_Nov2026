@@ -136,7 +136,7 @@ function makeReviewTask(entry) {
       if(country) task=flagColorTask(country,color);
     } else {
       const country=FLAG_COUNTRIES.find(x=>x.name===entry.key);
-      if(country) task=flagReviewTask(country,level);
+      if(country && country.from<=level) task=flagReviewTask(country,level);
     }
   }
   if(task) return {...task,subject:entry.subject,studyLevel:level,reviewTask:true};
@@ -260,14 +260,16 @@ function makeFreshMixedReplacement(currentSession,slot) {
       if(mixedTaskAllowed(currentSession,task,slot))return task;
     }
   } else if(subject==='flags') {
-    for(const country of shuffle(FLAG_COUNTRIES)) {
+    // Ersatzfragen duerfen niemals ungeuebte Flaggen hoeherer Stufen vorziehen.
+    const suitableFlags=shuffle(FLAG_COUNTRIES.filter(country=>country.from<=level));
+    for(const country of suitableFlags) {
       const base=flagReviewTask(country,Math.max(level,country.from));
       if(!base)continue;
       const task=normalize({...base,label:'Neue Flaggen-Entdeckung'});
       if(mixedTaskAllowed(currentSession,task,slot))return task;
     }
-    for(const country of shuffle(FLAG_COUNTRIES)) {
-      for(const color of shuffle(FLAG_COLORS[country.id])) {
+    for(const country of suitableFlags) {
+      for(const color of shuffle(FLAG_COLORS[country.id]||[])) {
         const task=normalize(flagColorTask(country,color));
         if(mixedTaskAllowed(currentSession,task,slot))return task;
       }

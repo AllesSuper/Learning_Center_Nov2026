@@ -68,11 +68,11 @@ function numericChoices(answer, step=1) {
   return shuffle(options.map(String));
 }
 function makeMathTasks() {
-  const a = int(80,480), b=int(35,390);
-  const x=int(180,900), y=int(30,x-15);
-  const f=int(2,10), g=int(2,10);
-  const divisor=int(2,10), quotient=int(3,10);
-  const books=int(3,8), boxes=int(3,9);
+  const a = int(12,54), b=int(8,100-a);
+  const x=int(35,100), y=int(8,x-1);
+  const f=int(3,11), g=int(1,10);
+  const divisor=int(3,11), quotient=int(1,10);
+  const books=int(1,10), boxes=int(3,11);
   const tasks=[
     {label:'Plus-Rechnen',context:'',question:`Wie viel ist ${a} + ${b}?`,answer:String(a+b),options:numericChoices(a+b,10),hint:'Addiere zuerst die Hunderter, dann Zehner und Einer.',explanation:`${a} + ${b} = ${a+b}. Gut gerechnet!`},
     {label:'Minus-Rechnen',context:'',question:`Wie viel ist ${x} − ${y}?`,answer:String(x-y),options:numericChoices(x-y,10),hint:'Du kannst die Zahl in Hunderter, Zehner und Einer zerlegen.',explanation:`${x} − ${y} = ${x-y}. Klasse!`},
