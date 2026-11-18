@@ -1,0 +1,63 @@
+name: Mathe-November ZIP synchronisieren
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Mathe-November_nur-Webseite/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mathe-november-zip
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Originaldateien aus GitHub holen (ohne Drittanbieter-Actions)
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          git init repo
+          cd repo
+          git remote add origin "https://github.com/${REPO}.git"
+          git fetch --depth 1 origin main
+          git checkout -B main FETCH_HEAD
+      - name: Vollständiges ZIP aus dem aktuellen Webseiten-Ordner erstellen
+        run: |
+          cd repo
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          source = Path('Mathe-November_nur-Webseite')
+          output = Path('Mathe-November_nur-Webseite.zip')
+          files = sorted(p for p in source.rglob('*') if p.is_file())
+          assert len(files) >= 112, f'Sicherheitsstopp: Es fehlen Dateien ({len(files)})'
+          assert (source / 'einmaleins_5min.js').exists()
+          assert (source / 'learning_content.js').exists()
+          with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+              for file in files:
+                  archive.write(file, file.relative_to(source).as_posix())
+          with zipfile.ZipFile(output) as archive:
+              assert archive.testzip() is None
+              assert len(archive.namelist()) == len(files)
+          print(f'ZIP erstellt: {output} mit {len(files)} Dateien')
+          PY
+      - name: Neue ZIP-Version veröffentlichen, falls verändert
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd repo
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Mathe-November_nur-Webseite.zip
+          if git diff --cached --quiet; then
+            echo 'ZIP stimmt bereits überein.'
+          else
+            git commit -m 'chore: synchronize complete Mathe-November website ZIP'
+            git -c "http.extraHeader=AUTHORIZATION: bearer ${GH_TOKEN}" push origin HEAD:main
+          fi

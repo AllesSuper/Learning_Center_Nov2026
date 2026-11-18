@@ -128,35 +128,28 @@ function timesBuildDeck(rowSelection,mode,stats=timesReadStats()) {
   return shuffled;
 }
 function timesMakeQuestion(task) {
+  // Blitztraining: Immer eine reine Rechnung, niemals eine Sachaufgabe.
+  // Profi-Auswahl bleibt unverändert: 16 Fakten aus 5×5..10×10, 4 Basisfakten.
   const {row,factor,op,revision}=task;
   if(!TIMES_ROWS.includes(row) || !Number.isInteger(factor)||factor<1||factor>10)throw Error('Ungültiger Einmaleinsfakt');
   const product=row*factor;
-  let question='',context='',answer,explanation,hint,kind='';
-  const story=(revision===0 && Math.random()<0.22);
+  let question='',answer,explanation,hint,kind='';
   if(op==='mul') {
     answer=product;
-    if(story) {
-      context=`🪐 Auf ${factor} Planeten leuchten jeweils ${row} Sterne.`;
-      question='Wie viele Sterne leuchten insgesamt?'; kind='🌟 Planetenrätsel';
-    } else {
-      question=`${row} × ${factor} = ?`;kind='✖️ Mal-Aufgabe';
-    }
+    question=`${row} × ${factor} = ?`;
+    kind='✖️ Mal-Aufgabe';
     explanation=`${row} × ${factor} = ${product}`;
-    hint=`Zähle ${factor} Mal in ${row}er-Schritten: ${Array.from({length:Math.min(factor,6)},(_,i)=>row*(i+1)).join(' · ')}${factor>6?' · …':''}`;
+    hint=`Denke an die ${row}er-Reihe.`;
   } else if(op==='div') {
-    // Beide Richtungen bleiben fuer die Reihen 3 bis 10 erlaubt.
-    // Bei der 11er-Reihe wird ausschliesslich durch 1 bis 10 geteilt.
+    // Auch die 11er-Reihe darf nur durch Zahlen bis einschließlich 10 teilen.
     const divisor=(row===11 || factor===10 || ((factor!==1 && revision%2===0) && Math.random()<0.45))?factor:row;
     answer=product/divisor;
-    if(story) {
-      context=`🛸 ${product} Kristalle werden gleichmäßig auf ${divisor} Raumschiffe verteilt.`;
-      question='Wie viele Kristalle erhält jedes Raumschiff?';kind='💎 Kristall-Verteilung';
-    } else {
-      question=`${product} : ${divisor} = ?`;kind='➗ Geteilt-Aufgabe';
-    }
-    explanation=`${product} : ${divisor} = ${answer} (denn ${divisor} × ${answer} = ${product})`;
-    hint=`Suche die passende Malaufgabe: ${divisor} × ? = ${product}.`;
+    question=`${product} : ${divisor} = ?`;
+    kind='➗ Geteilt-Aufgabe';
+    explanation=`${product} : ${divisor} = ${answer}`;
+    hint=`Denke an ${divisor} × ${answer} = ${product}.`;
   } else throw Error('Ungültige Rechenart');
+  if(!Number.isInteger(answer) || answer<1 || answer>110 || product>110)throw Error('Ungültiges Rechenergebnis');
   const candidates=[answer];
   const add=n=>{if(Number.isInteger(n)&&n>=0&&n<=110&&!candidates.includes(n))candidates.push(n);};
   for(const offset of timesShuffle([10,-10,20,-20,row,-row,1,-1,2,-2,3,-3,4,-4,5,-5,9,-9,11,-11])) {
@@ -164,8 +157,9 @@ function timesMakeQuestion(task) {
   }
   for(let n=0;candidates.length<8&&n<=110;n++)add(n);
   if(candidates.length!==8)throw Error('Nicht acht eindeutige Antworten');
-  return {...task,question,context,answer,explanation,hint,kind,options:timesShuffle(candidates)};
+  return {...task,question,context:'',answer,explanation,hint,kind,options:timesShuffle(candidates)};
 }
+
 function timesPlayTone(correct) {
   if(!timesSoundOn)return;
   try {
