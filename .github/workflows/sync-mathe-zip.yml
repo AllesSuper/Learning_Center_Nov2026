@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'Mathe-November_nur-Webseite/**'
+      - '.github/workflows/sync-mathe-zip.yml'
   workflow_dispatch:
 
 permissions:
@@ -59,5 +60,6 @@ jobs:
             echo 'ZIP stimmt bereits überein.'
           else
             git commit -m 'chore: synchronize complete Mathe-November website ZIP'
-            git -c "http.extraHeader=AUTHORIZATION: bearer ${GH_TOKEN}" push origin HEAD:main
+            AUTH_HEADER="$(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
+            git -c "http.extraHeader=AUTHORIZATION: basic ${AUTH_HEADER}" push origin HEAD:main
           fi
