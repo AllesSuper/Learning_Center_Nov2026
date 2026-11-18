@@ -96,3 +96,9 @@
 
 /* v9: Sichtbare Versionskennung, damit iPads veraltete Startseiten erkennen. */
 .version-note{margin:0 0 15px;padding:8px 12px;border:1px solid #d8d9ea;background:#fff;color:#514986;border-radius:12px;font-size:12px;font-weight:800;text-align:center;line-height:1.45}
+
+/* v12: Klarer Fokus auf schwierige Einmaleins-Aufgaben, ohne andere Modi zu verändern. */
+.times-focus-note,.times-focus-progress{display:block;padding:9px 13px;border:1px solid #f5c585;border-radius:12px;background:#fff5dc;color:#774616;font-size:13px;font-weight:800;line-height:1.5;margin:0 0 13px}
+.times-focus-progress{margin:4px 0;padding:6px 10px;font-size:12px}
+.times-focus-progress.hidden{display:none}
+@media(max-width:600px){.times-focus-note{font-size:12px;padding:8px 11px}}

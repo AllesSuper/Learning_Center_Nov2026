@@ -12,13 +12,13 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="icon" href="./icons/icon-192.png">
-  <link rel="stylesheet" href="./styles.css?v=20261117-v11-autoweiter-2sek">
-  <title>Mathe November – Lernabenteuer Klasse 3 · 17.11.2026 v11</title>
-  <script src="./learning_content.js?v=20261117-v11-autoweiter-2sek" defer></script>
-  <script src="./learning_extension.js?v=20261117-v11-autoweiter-2sek" defer></script>
-  <script src="./mixed_mode.js?v=20261117-v11-autoweiter-2sek" defer></script>
-  <script src="./app.js?v=20261117-v11-autoweiter-2sek" defer></script>
-  <script src="./einmaleins_5min.js?v=20261117-v11-autoweiter-2sek" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261118-v12-raketentest-80-20">
+  <title>Mathe November – Lernabenteuer Klasse 3 · 18.11.2026 v12</title>
+  <script src="./learning_content.js?v=20261118-v12-raketentest-80-20" defer></script>
+  <script src="./learning_extension.js?v=20261118-v12-raketentest-80-20" defer></script>
+  <script src="./mixed_mode.js?v=20261118-v12-raketentest-80-20" defer></script>
+  <script src="./app.js?v=20261118-v12-raketentest-80-20" defer></script>
+  <script src="./einmaleins_5min.js?v=20261118-v12-raketentest-80-20" defer></script>
 </head>
 <body>
   <a class="skip" href="#hauptinhalt">Zum Inhalt springen</a>
@@ -39,7 +39,7 @@
       <button class="nav-button" data-view="progress">🏆 Erfolge</button>
     </nav>
     <main id="hauptinhalt">
-      <p class="version-note" id="version-note">Aktuelle Version: 17.11.2026 · v11 · Klasse 3 · 20 Richtige ohne Timer · Antworten automatisch · Teilen nur durch 1–10</p>
+      <p class="version-note" id="version-note">Aktuelle Version: 18.11.2026 · v12 · Klasse 3 · Raketentest 80 % Profi / 20 % Basis · 20 Richtige ohne Timer · Teilen nur durch 1–10</p>
       <section id="view-home" class="view" aria-labelledby="welcome-title">
         <div class="hero">
           <div class="hero-content">
@@ -59,8 +59,8 @@
         </div>
         <section class="times-home-banner" aria-labelledby="times-home-title">
           <span class="times-home-icon" aria-hidden="true">🚀</span>
-          <div><span class="eyebrow">NEU · EINMALEINS OHNE ZEITDRUCK</span><h2 id="times-home-title">Einmaleins-Sternenflug</h2>
-            <p>3er- bis 11er-Reihe: Malnehmen und Teilen, mit Raketen, Sternen und cleveren Wiederholungen. 20 richtige Antworten bringen dich ans Ziel – ohne Zeitdruck! Richtige Antworten gehen sofort weiter, falsche Lösungen bleiben zwei Sekunden sichtbar.</p></div>
+          <div><span class="eyebrow">NEU · PROFI-RAKETENTEST 80/20</span><h2 id="times-home-title">Einmaleins-Sternenflug</h2>
+            <p>🔥 16 richtig gelöste Aufgaben aus 5×5 bis 10×10 plus 🌱 4 aus der 3er-/4er-Reihe. Malnehmen und Teilen, 20 Richtige ohne Zeitdruck! Alle anderen Reihen bleiben einzeln wählbar.</p></div>
           <button class="primary-button" type="button" data-view="times">Raketenflug starten →</button>
         </section>
         <section class="mixed-banner" aria-labelledby="mixed-banner-heading">
@@ -102,10 +102,11 @@
             <span class="times-mascot" aria-hidden="true">🦊🚀</span>
             <span class="eyebrow">DEIN ZIEL · 20 RICHTIGE AUFGABEN</span>
             <h1 id="times-title">Einmaleins-Sternenflug</h1>
-            <p class="times-intro">Rechne richtig, sammle Sternenstaub und fliege von Planet zu Planet! Schwierige Fragen kommen später noch einmal. Nimm dir so viel Zeit, wie du brauchst: Nur richtige Lösungen zählen zum Ziel.</p>
+            <p class="times-intro">Rechne richtig und fliege von Planet zu Planet! Standard: 80 % Aufgaben aus dem schwierigen Bereich 5×5 bis 10×10, 20 % aus der 3er-/4er-Reihe. Die alten Reihen kannst du weiterhin einzeln üben. Kein Zeitlimit: Nur richtige Lösungen zählen.</p>
             <fieldset class="times-fieldset"><legend>Welche Reihe möchtest du üben?</legend>
               <div class="times-row-buttons" id="times-rows" role="group" aria-label="Einmaleins-Reihe auswählen"></div>
             </fieldset>
+            <p id="times-focus-note" class="times-focus-note" role="status">🔥 Profi-Raketentest: 16 schwierige und vier einfache Aufgaben richtig lösen.</p>
             <fieldset class="times-fieldset"><legend>Was möchtest du rechnen?</legend>
               <div class="times-mode-buttons" id="times-modes" role="group" aria-label="Rechenart auswählen">
                 <button type="button" class="times-pick active" data-times-mode="both" aria-pressed="true">🔀 Mal &amp; Geteilt</button>
@@ -118,7 +119,7 @@
           </div>
           <div id="times-play" class="times-panel hidden">
             <div class="times-hud"><div class="times-goal-box"><span class="times-small">RICHTIG GELÖST</span><strong id="times-goal-count" class="times-goal-number">0 / 20</strong></div>
-              <div class="times-hud-stats"><span id="times-counter">Aufgabe 1</span><span id="times-streak">🔥 0 in Folge</span><span id="times-points">⭐ 0 Punkte</span></div>
+              <div class="times-hud-stats"><span id="times-counter">Aufgabe 1</span><span id="times-focus-progress" class="times-focus-progress hidden">🔥 Profi 0/16 · 🌱 Basis 0/4</span><span id="times-streak">🔥 0 in Folge</span><span id="times-points">⭐ 0 Punkte</span></div>
               <button type="button" id="times-stop" class="soft-button">Flug beenden</button></div>
             <div class="times-meter"><div id="times-meter-fill"></div></div>
             <div class="times-sky" aria-hidden="true"><span class="times-planet">🪐</span><span class="times-sparkle">✦ ✨ ✧</span><span id="times-rocket" class="times-rocket">🚀</span></div>

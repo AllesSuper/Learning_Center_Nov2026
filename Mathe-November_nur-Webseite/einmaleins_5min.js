@@ -4,6 +4,11 @@
 const TIMES_STORAGE = 'mathe-november-sternenflug-v1';
 const TIMES_BASE_QUESTIONS = 20; // Ziel sind genau 20 richtig gelöste Aufgaben, ohne Frist.
 const TIMES_ROWS = [3,4,5,6,7,8,9,10,11];
+// Im Profi-Raketentest werden exakt 16 schwierigere und vier Basisaufgaben
+// RICHTIG gelöst. Fehler verändern die 80/20-Verteilung nicht.
+const TIMES_FOCUS_GOALS = Object.freeze({focus:16,basics:4});
+const TIMES_FOCUS_ROWS = [5,6,7,8,9,10];
+const TIMES_BASICS_ROWS = [3,4];
 let timesRow = 'all';
 let timesMode = 'both';
 let timesSoundOn = false;
@@ -48,10 +53,17 @@ function timesUpdateBest() {
     : '🌟 Dein erster Rekord wartet!';
 }
 function timesSelectRow(value) {
+  if(value!=='focus' && value!=='all' && !TIMES_ROWS.includes(Number(value)))throw Error('Ungültige Auswahl');
   timesRow=value;
   for(const b of timesEl('times-rows').querySelectorAll('button')) {
     const active=b.dataset.timesRow===value;
     b.classList.toggle('active',active); b.setAttribute('aria-pressed',String(active));
+  }
+  const note=timesEl('times-focus-note');
+  if(note){
+    note.textContent=value==='focus'
+      ?'🔥 Profi-Raketentest: 16 richtige Aufgaben aus 5×5 bis 10×10 und vier aus der 3er-/4er-Reihe – ohne Zeitlimit.'
+      :value==='all'?'🌈 Freier Mix: alle Reihen 3 bis 11 wie bisher.':'🧠 Einzeltraining: die ausgewählte Reihe wie bisher.';
   }
   timesUpdateBest();
 }
@@ -64,6 +76,31 @@ function timesSelectMode(value) {
   timesUpdateBest();
 }
 function timesBuildDeck(rowSelection,mode,stats=timesReadStats()) {
+  if(rowSelection==='focus') {
+    if(!['both','mul','div'].includes(mode))throw Error('Ungültige Rechenart');
+    const collect=(rows,factors,count,bucket)=>{
+      // Keine Wiederholungen derselben Zahlenkombination in einem 20er-Grunddeck.
+      const coverage=Math.floor(count/rows.length);
+      // Jede Schwierigkeit/Reihe kommt in jeder Runde garantiert mehrfach vor.
+      const guaranteed=rows.flatMap(row=>timesShuffle(factors).slice(0,coverage).map(factor=>({row,factor})));
+      const seen=new Set(guaranteed.map(t=>`${t.row}:${t.factor}`));
+      const remaining=timesShuffle(rows.flatMap(row=>factors.map(factor=>({row,factor})))
+        .filter(t=>!seen.has(`${t.row}:${t.factor}`)));
+      const pairs=timesShuffle([...guaranteed,...remaining.slice(0,count-guaranteed.length)]);
+      if(pairs.length<count)throw Error('Zu kleiner Aufgabenpool');
+      const ops=mode==='both'
+        ?timesShuffle([...Array(count/2).fill('mul'),...Array(count/2).fill('div')])
+        :Array(count).fill(mode);
+      return pairs.slice(0,count).map((pair,i)=>{
+        const op=ops[i],key=`${op}:${pair.row}:${pair.factor}`;
+        return {...pair,op,key,revision:0,focusBucket:bucket,difficulty:stats.facts[key]?.errors||0};
+      });
+    };
+    return timesShuffle([
+      ...collect(TIMES_FOCUS_ROWS,[5,6,7,8,9,10],TIMES_FOCUS_GOALS.focus,'focus'),
+      ...collect(TIMES_BASICS_ROWS,[1,2,3,4,5,6,7,8,9,10],TIMES_FOCUS_GOALS.basics,'basics')
+    ]);
+  }
   const rows=rowSelection==='all'?TIMES_ROWS:[Number(rowSelection)];
   if(rows.some(row=>!TIMES_ROWS.includes(row)) || !['both','mul','div'].includes(mode))throw Error('Ungültige Übungsauswahl');
   // Jede gewählte Reihe wird bei „Mix“ mindestens einmal für Mal und Geteilt gezeigt.
@@ -156,6 +193,7 @@ function timesStart() {
   const stats=timesReadStats();
   timesGame={active:true,
     rowSelection:timesRow,mode:timesMode,deck:timesBuildDeck(timesRow,timesMode,stats),
+    focusSolved:{focus:0,basics:0},
     reviewQueue:[],answered:0,correct:0,wrong:0,streak:0,maxStreak:0,
     points:0,hintUsed:false,current:null,locked:false,
     audioCtx:null,seenFacts:new Set(),wrongFacts:new Set(),
@@ -169,23 +207,48 @@ function timesStart() {
   timesEl('times-rocket').style.left='5%';
   timesEl('times-goal-count').textContent=`0 / ${TIMES_BASE_QUESTIONS}`;
   timesEl('times-meter-fill').style.width='0%';
+  const focusProgress=timesEl('times-focus-progress');
+  if(focusProgress){focusProgress.classList.toggle('hidden',timesRow!=='focus');
+    focusProgress.textContent='🔥 Profi 0/16 · 🌱 Basis 0/4';}
   timesNextQuestion();
 }
 function timesNextQuestion() {
   const g=timesGame;
   if(!g || !g.active)return;
   if(g.correct>=TIMES_BASE_QUESTIONS) {timesFinish('done');return;}
-  // Nach Fehlern entstehen bei Bedarf weitere Aufgaben: nur 20 Richtige beenden den Flug.
-  if(!g.deck.length && !g.reviewQueue.length)g.deck=timesBuildDeck(g.rowSelection,g.mode,timesReadStats());
+  // Fehler erzeugen zusätzliche Fragen, doch die 16/4-Verteilung zählt
+  // ausschließlich RICHTIG gelöste Aufgaben. Ein erfüllter Bereich wird gesperrt.
   let card;
-  const due=g.reviewQueue.findIndex(t=>t.due<=g.answered);
-  if(due!==-1)card=g.reviewQueue.splice(due,1)[0];
-  else if(g.deck.length)card=g.deck.shift();
-  else card=g.reviewQueue.shift();
+  if(g.rowSelection==='focus') {
+    const needed=t=>t && TIMES_FOCUS_GOALS[t.focusBucket] > g.focusSolved[t.focusBucket];
+    const due=g.reviewQueue.findIndex(t=>needed(t) && t.due<=g.answered);
+    if(due!==-1)card=g.reviewQueue.splice(due,1)[0];
+    else {
+      let next=g.deck.findIndex(needed);
+      if(next<0){
+        g.deck=timesBuildDeck('focus',g.mode,timesReadStats()).filter(needed);
+        next=g.deck.findIndex(needed);
+      }
+      if(next>=0)card=g.deck.splice(next,1)[0];
+      else {
+        // Bei unerfülltem Ziel bleibt eine vorgemerkte Fehleraufgabe möglich.
+        const review=g.reviewQueue.findIndex(needed);
+        if(review>=0)card=g.reviewQueue.splice(review,1)[0];
+      }
+    }
+  } else {
+    if(!g.deck.length && !g.reviewQueue.length)g.deck=timesBuildDeck(g.rowSelection,g.mode,timesReadStats());
+    const due=g.reviewQueue.findIndex(t=>t.due<=g.answered);
+    if(due!==-1)card=g.reviewQueue.splice(due,1)[0];
+    else if(g.deck.length)card=g.deck.shift();
+    else card=g.reviewQueue.shift();
+  }
+  if(!card)throw Error('Kein offener Einmaleins-Aufgabenbereich vorhanden');
   g.current=timesMakeQuestion(card);
   g.hintUsed=false;g.locked=false;
   const phase=g.correct<7?'🌍 Aufwärmplanet':g.correct<14?'🪐 Sternennebel':'🌟 Finale: Galaxie der Profis';
-  timesEl('times-phase').textContent=(card.revision>0?'🔁 Rückflug: noch einmal üben! · ':'')+phase;
+  const zone=g.rowSelection==='focus'?(card.focusBucket==='focus'?'🔥 Profi-Zone 5×5 bis 10×10':'🌱 Basis-Zone 3er-/4er-Reihe'):phase;
+  timesEl('times-phase').textContent=(card.revision>0?'🔁 Rückflug: noch einmal üben! · ':'')+zone;
   timesEl('times-question-type').textContent=g.current.kind+` · ${card.row}er-Reihe`;
   timesEl('times-question').textContent=g.current.question;
   timesEl('times-context').textContent=g.current.context;
@@ -210,6 +273,11 @@ function timesAnswer(selected) {
   const q=g.current,good=selected===q.answer;
   g.answered++;
   if(good) {
+    if(g.rowSelection==='focus') {
+      if(!Object.hasOwn(TIMES_FOCUS_GOALS,q.focusBucket) ||
+         g.focusSolved[q.focusBucket]>=TIMES_FOCUS_GOALS[q.focusBucket])throw Error('Fokus-Ziel bereits erreicht');
+      g.focusSolved[q.focusBucket]++;
+    }
     g.correct++;g.streak++;g.maxStreak=Math.max(g.maxStreak,g.streak);
     g.points+=10;
     if(q.revision>0)g.reviewed++;
@@ -240,6 +308,9 @@ function timesAnswer(selected) {
   timesEl('times-rocket').style.left=`${Math.min(88,5+(g.correct/TIMES_BASE_QUESTIONS)*83)}%`;
   timesEl('times-meter-fill').style.width=`${Math.min(100,g.correct/TIMES_BASE_QUESTIONS*100)}%`;
   timesEl('times-goal-count').textContent=`${g.correct} / ${TIMES_BASE_QUESTIONS}`;
+  const focusProgress=timesEl('times-focus-progress');
+  if(focusProgress && g.rowSelection==='focus')
+    focusProgress.textContent=`🔥 Profi ${g.focusSolved.focus}/16 · 🌱 Basis ${g.focusSolved.basics}/4`;
   // Kein manueller Weiter-Knopf: richtig = sofort; falsch = Loesung zwei Sekunden.
   timesEl('times-next').classList.add('hidden');
   if(good) {
@@ -294,10 +365,12 @@ function timesFinish(reason) {
   timesEl('times-result-correct').textContent=String(g.correct);
   timesEl('times-result-accuracy').textContent=`${percent} %`;
   timesEl('times-result-stars').textContent=String(stars);
-  timesEl('times-result-next').textContent=g.wrong
-    ? `🔁 ${g.wrong} ${g.wrong===1?'Antwort war':'Antworten waren'} noch unsicher. Die schwierigen Reihen werden beim nächsten Flug bevorzugt geübt. Du hast ${g.reviewed} davon bereits richtig wiederholt!`
-    : g.answered?`🌟 ${g.correct} Aufgaben richtig! Du kannst morgen ganz in deinem Tempo weiterüben.`
-    :'Du kannst jederzeit einen neuen Flug starten.';
+  timesEl('times-result-next').textContent=g.rowSelection==='focus' && reason==='done'
+    ?`🔥 Profi 16/16 · 🌱 Basis 4/4 richtig! ${g.wrong?`${g.wrong} Fehlversuche wurden beim Üben berücksichtigt.`:'Alles beim ersten Versuch richtig!'}`
+    :g.wrong
+      ? `🔁 ${g.wrong} ${g.wrong===1?'Antwort war':'Antworten waren'} noch unsicher. Die schwierigen Reihen werden beim nächsten Flug bevorzugt geübt. Du hast ${g.reviewed} davon bereits richtig wiederholt!`
+      : g.answered?`🌟 ${g.correct} Aufgaben richtig! Du kannst morgen ganz in deinem Tempo weiterüben.`
+      :'Du kannst jederzeit einen neuen Flug starten.';
   timesGame=null;
   timesUpdateBest();
 }
@@ -312,15 +385,16 @@ function timesAbandon() {
 }
 function timesInit() {
   const rows=timesEl('times-rows');
-  for(const val of ['all',...TIMES_ROWS.map(String)]) {
+  for(const val of ['focus','all',...TIMES_ROWS.map(String)]) {
     const button=document.createElement('button');button.type='button';button.className='times-pick';
-    button.dataset.timesRow=val;button.textContent=val==='all'?'🌈 Alle 3–11':`${val}er`;
+    button.dataset.timesRow=val;
+    button.textContent=val==='focus'?'🔥 Profi-Raketentest 80/20':val==='all'?'🌈 Alle 3–11':`${val}er`;
     button.addEventListener('click',()=>timesSelectRow(val));rows.append(button);
   }
   for(const button of timesEl('times-modes').querySelectorAll('button')) {
     button.addEventListener('click',()=>timesSelectMode(button.dataset.timesMode));
   }
-  timesSelectRow('all');timesSelectMode('both');
+  timesSelectRow('focus');timesSelectMode('both');
   timesEl('times-start').addEventListener('click',timesStart);
   timesEl('times-next').addEventListener('click',timesNextQuestion);
   timesEl('times-hint').addEventListener('click',()=>{
