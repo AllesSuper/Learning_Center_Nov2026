@@ -19,7 +19,7 @@ jobs:
   archive:
     runs-on: ubuntu-latest
     steps:
-      - name: Originaldateien aus GitHub holen (ohne Drittanbieter-Actions)
+      - name: Webseite und Original-ZIP aus GitHub holen
         env:
           REPO: ${{ github.repository }}
         run: |
@@ -28,27 +28,38 @@ jobs:
           git remote add origin "https://github.com/${REPO}.git"
           git fetch --depth 1 origin main
           git checkout -B main FETCH_HEAD
-      - name: Vollständiges ZIP aus dem aktuellen Webseiten-Ordner erstellen
+          git fetch --depth 1 origin 9c59eaa5f7146fd3c3f23d076f61646f6c42530a
+      - name: Original-ZIP erhalten und Programmdateien additiv aktualisieren
         run: |
           cd repo
           python3 - <<'PY'
-          import zipfile
+          import io, subprocess, zipfile
           from pathlib import Path
+          base_commit = '9c59eaa5f7146fd3c3f23d076f61646f6c42530a'
+          old_bytes = subprocess.check_output(['git', 'show', base_commit + ':Mathe-November_nur-Webseite.zip'])
           source = Path('Mathe-November_nur-Webseite')
           output = Path('Mathe-November_nur-Webseite.zip')
-          files = sorted(p for p in source.rglob('*') if p.is_file())
-          assert len(files) >= 112, f'Sicherheitsstopp: Es fehlen Dateien ({len(files)})'
-          assert (source / 'einmaleins_5min.js').exists()
-          assert (source / 'learning_content.js').exists()
-          with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-              for file in files:
-                  archive.write(file, file.relative_to(source).as_posix())
+          editable = {'.js', '.html', '.css', '.webmanifest'}
+          with zipfile.ZipFile(io.BytesIO(old_bytes)) as original:
+              old_names = original.namelist()
+              assert len(old_names) == 112, f'Original-ZIP unvollständig: {len(old_names)}'
+              new_files = {p.relative_to(source).as_posix(): p for p in source.rglob('*') if p.is_file()}
+              assert set(old_names) <= set(new_files), 'Sicherheitsstopp: Originaldateien fehlen in GitHub'
+              with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as out:
+                  for name in old_names:
+                      path = new_files[name]
+                      old = original.read(name)
+                      new = path.read_bytes() if path.suffix in editable else old
+                      assert len(new) >= len(old) * 0.65, f'Sicherheitsstopp: {name} unerwartet kleiner'
+                      out.writestr(name, new)
+                  for name in sorted(set(new_files) - set(old_names)):
+                      out.writestr(name, new_files[name].read_bytes())
           with zipfile.ZipFile(output) as archive:
               assert archive.testzip() is None
-              assert len(archive.namelist()) == len(files)
-          print(f'ZIP erstellt: {output} mit {len(files)} Dateien')
+              assert set(old_names) <= set(archive.namelist())
+          print('Vollständige Original-ZIP aktualisiert; originale Flaggenbilder bleiben erhalten.')
           PY
-      - name: Neue ZIP-Version veröffentlichen, falls verändert
+      - name: Synchronisierte ZIP nach GitHub hochladen
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -57,9 +68,9 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add Mathe-November_nur-Webseite.zip
           if git diff --cached --quiet; then
-            echo 'ZIP stimmt bereits überein.'
+            echo 'ZIP bereits synchron.'
           else
-            git commit -m 'chore: synchronize complete Mathe-November website ZIP'
+            git commit -m 'chore: update full website ZIP preserving original assets'
             AUTH_HEADER="$(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
             git -c "http.extraHeader=AUTHORIZATION: basic ${AUTH_HEADER}" push origin HEAD:main
           fi
